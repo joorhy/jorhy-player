@@ -5,26 +5,26 @@ const char *content_length = "Content-Length:";
 
 /*Option method for rtsp protocol*/
 static const char *option = 
-"OPTIONS rtsp://222.214.218.237:6601/LDMsMTI4MTIsMSwxLDAsMA== RTSP/1.0\r\n"
+"OPTIONS rtsp://222.214.218.237:6601/LDMsMTI4MTIsMiwxLDAsMA== RTSP/1.0\r\n"
 "CSeq: 1\r\n"
 "User-Agent: GPSViewer (6.1.0.1 2012-06-14)\r\n\r\n";
 
 /*Describe method for rtsp protocol*/
 static const char *describe = 
-"DESCRIBE rtsp://222.214.218.237:6601/LDMsMTI4MTIsMSwxLDAsMA== RTSP/1.0\r\n"
+"DESCRIBE rtsp://222.214.218.237:6601/LDMsMTI4MTIsMiwxLDAsMA== RTSP/1.0\r\n"
 "CSeq: 2\r\n"
 "User-Agent: GPSViewer (6.1.0.1 2012-06-14)\r\n\r\n";
 
 /*Setup method for rtsp protocol*/
 static const char *setup_a = 
-"SETUP rtsp://222.214.218.237:6601/LDMsMTI4MTIsMSwxLDAsMA== RTSP/1.0\r\n"
+"SETUP rtsp://222.214.218.237:6601/LDMsMTI4MTIsMiwxLDAsMA== RTSP/1.0\r\n"
 "CSeq: 3\r\n"
 "User-Agent: GPSViewer (6.1.0.1 2012-06-14)\r\n"
 "Transport: RTP/AVP/TCP;unicast;interleaved=0-1\r\n\r\n";
 
 /*Setup method for rtsp protocol*/
 static const char *setup_v = 
-"SETUP rtsp://222.214.218.237:6601/LDMsMTI4MTIsMSwxLDAsMA== RTSP/1.0\r\n"
+"SETUP rtsp://222.214.218.237:6601/LDMsMTI4MTIsMiwxLDAsMA== RTSP/1.0\r\n"
 "CSeq: 4\r\n"
 "User-Agent: GPSViewer (6.1.0.1 2012-06-14)\r\n"
 "Session: AAF8C703304D46E8BF366802C1D5CF7E\r\n"
@@ -32,7 +32,7 @@ static const char *setup_v =
 
 /*Play method for rtsp progocol*/
 static const char *play = 
-"PLAY rtsp://222.214.218.237:6601/LDMsMTI4MTIsMSwxLDAsMA== RTSP/1.0\r\n"
+"PLAY rtsp://222.214.218.237:6601/LDMsMTI4MTIsMiwxLDAsMA== RTSP/1.0\r\n"
 "CSeq: 5\r\n"
 "User-Agent: GPSViewer (6.1.0.1 2012-06-14)\r\n"
 "Session: 21B46086FD2E4240BB1ACCD307E8A351\r\n"
