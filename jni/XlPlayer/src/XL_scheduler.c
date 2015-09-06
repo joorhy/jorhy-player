@@ -41,8 +41,8 @@ void sock_fd_set(Scheduler *schd)
 	FD_ZERO(&schd->readfds);
 	while (session)
 	{
-		schd->session->is_set = 0;
-		FD_SET(schd->session->packet->sock, &schd->readfds);
+		session->is_set = 0;
+		FD_SET(session->packet->sock, &schd->readfds);
 		session = session->next;
 	}
 }
@@ -87,7 +87,7 @@ int schedule_func(void *data)
 				{
 					if (session->is_set)
 					{
-						session_process(schd->surface, schd->session);
+						session_process(schd->surface, session);
 						session->is_set = 0;
 					}
 					session = session->next;
@@ -119,7 +119,7 @@ void scheduler_wait(Scheduler *schd)
 			{
 				break;
 			}
-			printf("%d\n", e.type);
+			//printf("%d\n", e.type);
 		}
 	}
 }

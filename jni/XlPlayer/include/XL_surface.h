@@ -13,8 +13,8 @@ enum SurfaceMode
 typedef struct JoSurface
 {
 	SDL_Window * screen;
-	SDL_Renderer* render;
-	SDL_Texture* texture;
+	SDL_Renderer* render[4];
+	SDL_Texture* texture[4];
 	/*max video screen max 4*/
 	SDL_Rect video[4];
 } JoSurface;

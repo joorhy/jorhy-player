@@ -36,7 +36,7 @@ struct _RtspSession
 };
 
 extern RtspSession *create_session();
-extern void initialize_session(RtspSession *session, const char *addr, short port, int x, int y, int width, int height);
+extern void initialize_session(RtspSession *session, const char *addr, short port);
 extern void destroy_session(RtspSession *session);
 
 extern void recv_rtsp_str(RtspSession *session);
