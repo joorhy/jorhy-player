@@ -1,42 +1,52 @@
 #include "XL_rtsp_session.h"
+#include "XL_base64.h"
 
 const char *rtsp_end = "\r\n\r\n";
 const char *content_length = "Content-Length:";
 
+/*uri source string*/
+static const char *src_uri = ",3,%s,%d,1,0,0";
+
 /*Option method for rtsp protocol*/
 static const char *option = 
-"OPTIONS rtsp://222.214.218.237:6601/LDMsMTI4MTIsMiwxLDAsMA== RTSP/1.0\r\n"
-"CSeq: 1\r\n"
+"OPTIONS rtsp://%s:%d/%s RTSP/1.0\r\n"
+"CSeq: %d\r\n"
 "User-Agent: GPSViewer (6.1.0.1 2012-06-14)\r\n\r\n";
 
 /*Describe method for rtsp protocol*/
 static const char *describe = 
-"DESCRIBE rtsp://222.214.218.237:6601/LDMsMTI4MTIsMiwxLDAsMA== RTSP/1.0\r\n"
-"CSeq: 2\r\n"
+"DESCRIBE rtsp://%s:%d/%s RTSP/1.0\r\n"
+"CSeq: %d\r\n"
 "User-Agent: GPSViewer (6.1.0.1 2012-06-14)\r\n\r\n";
 
 /*Setup method for rtsp protocol*/
 static const char *setup_a = 
-"SETUP rtsp://222.214.218.237:6601/LDMsMTI4MTIsMiwxLDAsMA== RTSP/1.0\r\n"
-"CSeq: 3\r\n"
+"SETUP rtsp://%s:%d/%s RTSP/1.0\r\n"
+"CSeq: %d\r\n"
 "User-Agent: GPSViewer (6.1.0.1 2012-06-14)\r\n"
 "Transport: RTP/AVP/TCP;unicast;interleaved=0-1\r\n\r\n";
 
 /*Setup method for rtsp protocol*/
 static const char *setup_v = 
-"SETUP rtsp://222.214.218.237:6601/LDMsMTI4MTIsMiwxLDAsMA== RTSP/1.0\r\n"
-"CSeq: 4\r\n"
+"SETUP rtsp://%s:%d/%s RTSP/1.0\r\n"
+"CSeq: %d\r\n"
 "User-Agent: GPSViewer (6.1.0.1 2012-06-14)\r\n"
 "Session: AAF8C703304D46E8BF366802C1D5CF7E\r\n"
 "Transport: RTP/AVP/TCP;unicast;interleaved=2-3\r\n\r\n";
 
-/*Play method for rtsp progocol*/
+/*Play method for rtsp protocol*/
 static const char *play = 
-"PLAY rtsp://222.214.218.237:6601/LDMsMTI4MTIsMiwxLDAsMA== RTSP/1.0\r\n"
-"CSeq: 5\r\n"
+"PLAY rtsp://%s:%d/%s RTSP/1.0\r\n"
+"CSeq: %d\r\n"
 "User-Agent: GPSViewer (6.1.0.1 2012-06-14)\r\n"
 "Session: 21B46086FD2E4240BB1ACCD307E8A351\r\n"
 "Range: npt=0.000-\r\n\r\n";
+
+/*Teardown method for rtsp protocol*/
+static const char *teardown =
+"TEARDOWN rtsp://%s:%d/%s RTSP/1.0\r\n"
+"CSeq: %d\r\n"
+"User-Agent: GPSViewer (6.1.0.1 2012-06-14)\r\n\r\n";
 
 RtspSession *create_session()
 {
@@ -46,9 +56,21 @@ RtspSession *create_session()
 	return session;
 }
 
-void initialize_session(RtspSession *session, const char *addr, short port)
+void initialize_session(RtspSession *session, const char *addr, short port, const char *vec_id, int channel)
 {
 	session->session_state = init_state;
+	session->cseq = 1;
+	memcpy(session->addr, addr, strlen(addr));
+	session->port = port;
+
+	/*make base64 code of uri*/
+	char uri[64] = { 0 };
+#ifdef WIN32
+	sprintf_s(uri, sizeof(uri), src_uri, vec_id, channel);
+#else
+	sprintf(uri, src_uri, vec_id, channel);
+#endif
+	base64_in(uri, session->uri, strlen(uri));
 
 	session->packet = create_packet();
 	initialize_packet(session->packet, addr, port);
@@ -147,51 +169,97 @@ void session_start(RtspSession *session)
 
  }
 
+ void set_session_index(RtspSession *session, int index)
+ {
+	 session->index = index;
+ }
+
  void rtsp_option(RtspSession *session)
  {
+	char cmd_buffer[1024] = { 0 };
 	session->session_state = option_state;
 
-	session->packet->send_buffer = (char *)option;
-	session->packet->send_len = strlen(option);
+#ifdef WIN32
+	sprintf_s(cmd_buffer, sizeof(cmd_buffer), option, session->addr, session->port, session->uri, session->cseq++);
+#else
+	sprintf(cmd_buffer, option, session->addr, session->port, session->uri, session->cseq++);
+#endif
+	session->packet->send_buffer = (char *)cmd_buffer;
+	session->packet->send_len = strlen(cmd_buffer);
 	send_packet(session->packet);
  }
 
 void rtsp_describe(RtspSession *session)
 {
+	char cmd_buffer[1024] = { 0 };
 	session->session_state = describe_state;
 
-	session->packet->send_buffer = (char *)describe;
-	session->packet->send_len = strlen(describe);
+#ifdef WIN32
+	sprintf_s(cmd_buffer, sizeof(cmd_buffer), describe, session->addr, session->port, session->uri, session->cseq++);
+#else
+	sprintf(cmd_buffer, describe, session->addr, session->port, session->uri, session->cseq++);
+#endif
+	session->packet->send_buffer = (char *)cmd_buffer;
+	session->packet->send_len = strlen(cmd_buffer);
 	send_packet(session->packet);
 }
 
 void rtsp_setup_video(RtspSession *session)
 {
+	char cmd_buffer[1024] = { 0 };
 	session->session_state = setup_video_state;
 
-	session->packet->send_buffer = (char *)setup_v;
-	session->packet->send_len = strlen(setup_v);
+#ifdef WIN32
+	sprintf_s(cmd_buffer, sizeof(cmd_buffer), setup_v, session->addr, session->port, session->uri, session->cseq++);
+#else
+	sprintf(cmd_buffer, setup_v, session->addr, session->port, session->uri, session->cseq++);
+#endif
+	session->packet->send_buffer = (char *)cmd_buffer;
+	session->packet->send_len = strlen(cmd_buffer);
 	send_packet(session->packet);
 }
 
 void rtsp_setup_audio(RtspSession *session)
 {
+	char cmd_buffer[1024] = { 0 };
 	session->session_state = setup_audio_state;
 
-	session->packet->send_buffer = (char *)setup_a;
-	session->packet->send_len = strlen(setup_a);
+#ifdef WIN32
+	sprintf_s(cmd_buffer, sizeof(cmd_buffer), setup_a, session->addr, session->port, session->uri, session->cseq++);
+#else
+	sprintf(cmd_buffer, setup_a, session->addr, session->port, session->uri, session->cseq++);
+#endif
+	session->packet->send_buffer = (char *)cmd_buffer;
+	session->packet->send_len = strlen(cmd_buffer);
 	send_packet(session->packet);
 }
 
 void rtsp_play(RtspSession *session)
 {
+	char cmd_buffer[1024] = { 0 };
 	session->session_state = play_state;
 
-	session->packet->send_buffer = (char *)play;
-	session->packet->send_len = strlen(play);
+#ifdef WIN32
+	sprintf_s(cmd_buffer, sizeof(cmd_buffer), play, session->addr, session->port, session->uri, session->cseq++);
+#else
+	sprintf(cmd_buffer, play, session->addr, session->port, session->uri, session->cseq++);
+#endif
+	session->packet->send_buffer = (char *)cmd_buffer;
+	session->packet->send_len = strlen(cmd_buffer);
 	send_packet(session->packet);
 }
 
 void rtsp_teardown(RtspSession *session)
 {
+	char cmd_buffer[1024] = { 0 };
+	session->session_state = teardown_state;
+
+#ifdef WIN32
+	sprintf_s(cmd_buffer, sizeof(cmd_buffer), teardown, session->addr, session->port, session->uri, session->cseq++);
+#else
+	sprintf(cmd_buffer, teardown, session->addr, session->port, session->uri, session->cseq++);
+#endif
+	session->packet->send_buffer = (char *)cmd_buffer;
+	session->packet->send_len = strlen(cmd_buffer);
+	send_packet(session->packet);
 }

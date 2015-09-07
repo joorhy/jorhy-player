@@ -33,10 +33,14 @@ struct _RtspSession
 	int session_state;
 	int is_set;
 	int index;
+	int cseq;
+	char addr[16];
+	short port;
+	char uri[32];
 };
 
 extern RtspSession *create_session();
-extern void initialize_session(RtspSession *session, const char *addr, short port);
+extern void initialize_session(RtspSession *session, const char *addr, short port, const char *vec_id, int channel);
 extern void destroy_session(RtspSession *session);
 
 extern void recv_rtsp_str(RtspSession *session);
@@ -44,6 +48,8 @@ extern void session_process(JoSurface *surface, RtspSession *session);
 
 extern void session_start(RtspSession *session);
 extern void session_stop(RtspSession *session);
+
+extern void set_session_index(RtspSession *session, int index);
 
 extern void rtsp_option(RtspSession *session);
 extern void rtsp_describe(RtspSession *session);

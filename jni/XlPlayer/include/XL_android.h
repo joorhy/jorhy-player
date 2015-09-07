@@ -10,6 +10,7 @@ extern "C" {
 
 #include <jni.h>
 
+extern void Java_com_example_toyotahmimain_PlayerActivity_nativeInit(JNIEnv* env, jclass cls, jobject obj);
 /* Ends C function definitions when using C++ */
 #ifdef __cplusplus
 /* *INDENT-OFF* */

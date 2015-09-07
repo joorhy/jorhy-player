@@ -24,7 +24,7 @@ extern "C" {
 #endif
 
 extern Scheduler *create_scheduler();
-extern void initialize_scheduler(Scheduler *schd);
+extern void initialize_scheduler(Scheduler *schd, void *native_windows);
 extern void scheduler_start(Scheduler *schd);
 extern void scheduler_wait(Scheduler *schd);
 extern void scheduler_stop(Scheduler *schd);

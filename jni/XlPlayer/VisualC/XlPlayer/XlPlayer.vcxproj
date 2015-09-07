@@ -85,6 +85,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\WIN32\win_main.c" />
+    <ClCompile Include="..\..\src\XL_base64.c" />
     <ClCompile Include="..\..\src\XL_decoder.c" />
     <ClCompile Include="..\..\src\XL_packet.c" />
     <ClCompile Include="..\..\src\XL_rtp_stream.c" />
@@ -93,6 +94,7 @@
     <ClCompile Include="..\..\src\XL_surface.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\include\XL_base64.h" />
     <ClInclude Include="..\..\include\XL_decoder.h" />
     <ClInclude Include="..\..\include\XL_packet.h" />
     <ClInclude Include="..\..\include\XL_rtp_stream.h" />

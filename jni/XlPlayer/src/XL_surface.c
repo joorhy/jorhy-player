@@ -7,16 +7,22 @@ JoSurface *create_surface()
 	return surface;
 }
 
-int initialize_surface(JoSurface *surface)
+int initialize_surface(JoSurface *surface, void *native_windows)
 {
 	int width, height;
-	surface->screen = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 352, 576, /*SDL_WINDOW_FULLSCREEN |*/ SDL_WINDOW_OPENGL);
+	if (native_windows == NULL)
+	{
+		surface->screen = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 352, 576, /*SDL_WINDOW_FULLSCREEN |*/ SDL_WINDOW_OPENGL);
+	}
+	else
+	{
+		surface->screen = SDL_CreateWindowFrom(native_windows);
+	}
+
 	surface->render = SDL_CreateRenderer(surface->screen, -1, SDL_RENDERER_SOFTWARE);
 
 	SDL_GetWindowSize(surface->screen, &width, &height);
 	surface->texture = SDL_CreateTexture(surface->render, SDL_PIXELFORMAT_IYUV, SDL_TEXTUREACCESS_STREAMING, width, height);
-
-	set_surface_mode(surface, mode_2);
 }
 
 void set_surface_mode(JoSurface *surface, int mode)

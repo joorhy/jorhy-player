@@ -24,7 +24,7 @@ extern "C" {
 #endif
 
 extern JoSurface *create_surface();
-extern int initialize_surface(JoSurface *surface);
+extern int initialize_surface(JoSurface *surface, void *native_windows);
 extern void set_surface_mode(JoSurface *surface, int mode);
 extern void render_frame(JoSurface *surface, H264Decoder *decoder, int index);
 extern void destroy_surface(JoSurface *surface);

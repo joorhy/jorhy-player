@@ -10,7 +10,7 @@ Scheduler *create_scheduler()
 	return schd;
 }
 
-void initialize_scheduler(Scheduler *schd)
+void initialize_scheduler(Scheduler *schd, void *native_windows)
 {
 	/* Init SDL */
 	if (SDL_Init(SDL_INIT_VIDEO) == -1)
@@ -19,7 +19,7 @@ void initialize_scheduler(Scheduler *schd)
 	}
 
 	schd->surface = create_surface();
-	initialize_surface(schd->surface);
+	initialize_surface(schd->surface, native_windows);
 
 	schd->lock = SDL_CreateMutex();
 }
