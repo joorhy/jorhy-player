@@ -15,7 +15,7 @@ static Scheduler *schd;
 static RtspSession *session_1;
 static RtspSession *session_2;
 
-void Java_com_example_toyotahmimain_PlayerActivity_nativeInit(JNIEnv* env, jclass cls, jobject obj)
+void Java_com_jorhy_player_PlayerActivity_nativeInit(JNIEnv* env, jclass cls, jobject obj)
 {
 	/* This interface could expand with ABI negotiation, calbacks, etc. */
     SDL_Android_Init(env, cls);
