@@ -11,14 +11,30 @@
 extern "C" {
 #endif
 #include "SDL.h"
+
+#ifdef USE_FFMPEG
 #include "libavcodec\avcodec.h"
+#else
+#include "codec_api.h"
+#include "codec_def.h"
+#include "codec_app_def.h"
+#include "codec_ver.h"
+#endif
 
 typedef struct H264Decoder
 {
+#ifdef USE_FFMPEG
+	// for decoder resource(ffmpeg)
 	AVCodecContext *context;
 	AVFrame *picture;
 	AVPacket packet;
 	AVCodec *codec;
+#else
+	// for decoder resource(open h264)
+	ISVCDecoder *dec;
+	unsigned char* data[3];
+	SBufferInfo bufInfo;
+#endif
 	char *yuv;
 	int yuv_len;
 	SDL_Rect rect;

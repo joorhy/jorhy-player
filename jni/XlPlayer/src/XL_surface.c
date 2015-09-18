@@ -80,8 +80,13 @@ void set_surface_mode(JoSurface *surface, int mode)
 
 void render_frame(JoSurface *surface, H264Decoder *decoder, int index)
 {
+#ifdef USE_FFMPEG
 	SDL_UpdateYUVTexture(surface->texture, &decoder->rect, (const Uint8 *)decoder->picture->data[0], decoder->picture->linesize[0],
 		(const Uint8 *)decoder->picture->data[1], decoder->picture->linesize[1], (const Uint8 *)decoder->picture->data[2], decoder->picture->linesize[2]);
+#else
+	SDL_UpdateYUVTexture(surface->texture, &decoder->rect, (const Uint8 *)decoder->data[0], decoder->bufInfo.UsrData.sSystemBuffer.iStride[0],
+		(const Uint8 *)decoder->data[1], decoder->bufInfo.UsrData.sSystemBuffer.iStride[1], (const Uint8 *)decoder->data[2], decoder->bufInfo.UsrData.sSystemBuffer.iStride[1]);
+#endif
 	//SDL_RenderClear(surface->render);
 	SDL_RenderCopy(surface->render, surface->texture, &decoder->rect, &surface->video[index]);
 	SDL_RenderPresent(surface->render);
