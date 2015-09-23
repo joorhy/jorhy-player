@@ -1,3 +1,4 @@
+#include "XL_log.h"
 #include "XL_rtsp_session.h"
 #include "XL_scheduler.h"
 

@@ -1,3 +1,4 @@
+#include "XL_log.h"
 #include "XL_decoder.h"
 
 #ifdef USE_FFMPEG
@@ -107,7 +108,7 @@ int decode_frame(H264Decoder *decoder, RtpStream *stream)
 	ret = avcodec_decode_video2(decoder->context, decoder->picture, &size, &decoder->packet);
 	if (ret < 0)
 	{
-		printf("CXPlDecodeH264::Decode error :%d\n", ret);
+		LOGE("CXPlDecodeH264::Decode error :%d\n", ret);
 	}
 
 	decoder->rect.w = decoder->context->width;

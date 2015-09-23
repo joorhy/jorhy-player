@@ -1,3 +1,4 @@
+#include "XL_log.h"
 #include "XL_surface.h"
 
 JoSurface *create_surface()

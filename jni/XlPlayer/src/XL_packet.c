@@ -1,3 +1,4 @@
+#include "XL_log.h"
 #include "XL_packet.h"
 
 #define MAX_PACKET_SIZE 8192
@@ -58,7 +59,7 @@ int send_packet(RtspPacket *pack)
 int recv_packet(RtspPacket *pack, int offset)
 {
 	recv(pack->sock, pack->recv_buffer + offset, pack->recv_len, 0);
-	printf("recv len = %d\n", pack->recv_len);
+	LOGI("recv len = %d\n", pack->recv_len);
 
 	return 0;
 }

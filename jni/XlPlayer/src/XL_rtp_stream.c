@@ -1,3 +1,4 @@
+#include "XL_log.h"
 #include "XL_rtp_stream.h"
 
 #define MAX_FRAME_SIZE (1024 * 1024)
@@ -101,7 +102,7 @@ void process_rtp_packet(RtspPacket *pack, RtpStream *stream)
 		}
 		else if ((pack->recv_buffer[1] & 0xFF) == 0x02)  // rtp video packet
 		{
-			printf("video len = %d\n", pack->recv_len);
+			LOGI("video len = %d\n", pack->recv_len);
 
 			packet_data = pack->recv_buffer + 16;
 			if (pack->recv_buffer[5] & 0x80)
@@ -118,7 +119,7 @@ void process_rtp_packet(RtspPacket *pack, RtpStream *stream)
 
 					stream->frame_type = get_frame_type(packet_data);
 
-					printf("this is complate frame\n");
+					LOGI("this is complate frame\n");
 				}
 				else
 				{
@@ -126,7 +127,7 @@ void process_rtp_packet(RtspPacket *pack, RtpStream *stream)
 					memcpy(frame_data, packet_data + 2, pack->recv_len - 12 - 2);
 					stream->frame_len += pack->recv_len - 12 - 2;
 
-					printf("this is a large frame\n");
+					LOGI("this is a large frame\n");
 				}
 				stream->stream_state = stream_complate;
 			}
@@ -174,7 +175,7 @@ void process_rtp_packet(RtspPacket *pack, RtpStream *stream)
 		}
 		else if ((pack->recv_buffer[1] & 0xFF) == 0x00)  // rtp audio packet
 		{
-			printf("audio len = %d\n", pack->recv_len);
+			LOGI("audio len = %d\n", pack->recv_len);
 		}
 	}
 }

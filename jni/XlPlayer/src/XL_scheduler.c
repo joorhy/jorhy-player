@@ -1,3 +1,4 @@
+#include "XL_log.h"
 #include "XL_scheduler.h"
 
 #pragma comment (lib, "lib\\SDL2.lib")
@@ -13,11 +14,14 @@ Scheduler *create_scheduler()
 void initialize_scheduler(Scheduler *schd, void *native_windows)
 {
 	/* Init SDL */
+	LOGI("initialize_scheduler start");
 	if (SDL_Init(SDL_INIT_VIDEO) == -1)
 	{
+		LOGI("initialize_scheduler error, %s", SDL_GetError());
 		return;
 	}
-
+	LOGI("initialize_scheduler success");
+	
 	schd->surface = create_surface();
 	initialize_surface(schd->surface, native_windows);
 
@@ -119,7 +123,7 @@ void scheduler_wait(Scheduler *schd)
 			{
 				break;
 			}
-			//printf("%d\n", e.type);
+			//LOGI("%d\n", e.type);
 		}
 	}
 }
@@ -173,7 +177,7 @@ void del_session(Scheduler *schd, RtspSession *session)
 		else 
 		{
 			/* the session was not found ! */
-			printf("rtp_scheduler_remove_session: the session was not found in the scheduler list!");
+			LOGI("rtp_scheduler_remove_session: the session was not found in the scheduler list!");
 			cond = 0;
 		}
 	}
