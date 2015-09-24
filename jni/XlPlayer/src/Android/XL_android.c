@@ -77,8 +77,8 @@ extern void SDL_Android_Init(JNIEnv* env, jclass cls);
 void Java_com_jorhy_player_PlayerActivity_nativeInit(JNIEnv* env, jclass cls, jobject obj)
 {
 	 /* This interface could expand with ABI negotiation, calbacks, etc. */
-    //SDL_Android_Init(env, cls);
-	//LOGI("Java_com_jorhy_player_PlayerActivity_nativeInit SDL_Android_Init success");
+    SDL_Android_Init(env, cls);
+	LOGI("Java_com_jorhy_player_PlayerActivity_nativeInit SDL_Android_Init success");
 	
     SDL_SetMainReady();
 	LOGI("Java_com_jorhy_player_PlayerActivity_nativeInit SDL_SetMainReady success");

@@ -14,13 +14,13 @@ Scheduler *create_scheduler()
 void initialize_scheduler(Scheduler *schd, void *native_windows)
 {
 	/* Init SDL */
-	LOGI("initialize_scheduler start");
+	/*LOGI("initialize_scheduler start");
 	if (SDL_Init(SDL_INIT_VIDEO) == -1)
 	{
 		LOGI("initialize_scheduler error, %s", SDL_GetError());
 		return;
 	}
-	LOGI("initialize_scheduler success");
+	LOGI("initialize_scheduler success");*/
 	
 	schd->surface = create_surface();
 	initialize_surface(schd->surface, native_windows);

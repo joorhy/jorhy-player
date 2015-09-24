@@ -11,6 +11,10 @@ JoSurface *create_surface()
 int initialize_surface(JoSurface *surface, void *native_windows)
 {
 	int width, height;
+
+#ifdef __ANDROID__
+	SDL_CreateWindowAndRenderer(0, 0, 0, &surface->screen, &surface->render);
+#else
 	if (native_windows == NULL)
 	{
 		surface->screen = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 352, 576, /*SDL_WINDOW_FULLSCREEN |*/ SDL_WINDOW_OPENGL);
@@ -21,7 +25,7 @@ int initialize_surface(JoSurface *surface, void *native_windows)
 	}
 
 	surface->render = SDL_CreateRenderer(surface->screen, -1, SDL_RENDERER_SOFTWARE);
-
+#endif
 	SDL_GetWindowSize(surface->screen, &width, &height);
 	surface->texture = SDL_CreateTexture(surface->render, SDL_PIXELFORMAT_IYUV, SDL_TEXTUREACCESS_STREAMING, width, height);
 }
