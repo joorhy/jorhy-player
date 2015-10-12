@@ -37,6 +37,7 @@ typedef struct H264Decoder
 #endif
 	char *yuv;
 	int yuv_len;
+	char *rgb;
 	SDL_Rect rect;
 } H264Decoder;
 

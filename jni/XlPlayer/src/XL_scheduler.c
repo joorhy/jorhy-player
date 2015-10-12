@@ -1,7 +1,9 @@
 #include "XL_log.h"
 #include "XL_scheduler.h"
 
+#ifdef WIN32
 #pragma comment (lib, "lib\\SDL2.lib")
+#endif
 
 Scheduler *create_scheduler()
 {
@@ -14,13 +16,13 @@ Scheduler *create_scheduler()
 void initialize_scheduler(Scheduler *schd, void *native_windows)
 {
 	/* Init SDL */
-	/*LOGI("initialize_scheduler start");
+	LOGI("initialize_scheduler start");
 	if (SDL_Init(SDL_INIT_VIDEO) == -1)
 	{
 		LOGI("initialize_scheduler error, %s", SDL_GetError());
 		return;
 	}
-	LOGI("initialize_scheduler success");*/
+	LOGI("initialize_scheduler success");
 	
 	schd->surface = create_surface();
 	initialize_surface(schd->surface, native_windows);
@@ -105,17 +107,36 @@ int schedule_func(void *data)
 void scheduler_start(Scheduler *schd)
 {
 	schd->running = 1;
-	schd->thread = SDL_CreateThread(schedule_func, "", schd);
+	//schd->thread = SDL_CreateThread(schedule_func, "", schd);
 }
 
 void scheduler_wait(Scheduler *schd)
 {
 	SDL_Event e;
-	while (1)
+	RtspSession *session;
+	while (schd->running)
 	{
+		if (schd->session)
+		{
+			sock_fd_set(schd);
+			if (sock_select(schd) > 0)
+			{
+				session = schd->session;
+				while (session)
+				{
+					if (session->is_set)
+					{
+						session_process(schd->surface, session);
+						session->is_set = 0;
+					}
+					session = session->next;
+				}
+			}
+		}
+
 		if (SDL_PollEvent(&e)) 
 		{
-			if (e.type == SDL_QUIT) 
+			if (e.type == SDL_QUIT  || e.type == SDL_FINGERDOWN) 
 			{
 				break;
 			}

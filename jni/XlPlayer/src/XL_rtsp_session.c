@@ -59,13 +59,14 @@ RtspSession *create_session()
 
 void initialize_session(RtspSession *session, const char *addr, short port, const char *vec_id, int channel)
 {
+	/*make base64 code of uri*/
+	char uri[64] = { 0 };
+
 	session->session_state = init_state;
 	session->cseq = 1;
 	memcpy(session->addr, addr, strlen(addr));
 	session->port = port;
 
-	/*make base64 code of uri*/
-	char uri[64] = { 0 };
 #ifdef WIN32
 	sprintf_s(uri, sizeof(uri), src_uri, vec_id, channel);
 #else

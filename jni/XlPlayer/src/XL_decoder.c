@@ -1,6 +1,8 @@
 #include "XL_log.h"
 #include "XL_decoder.h"
 
+#ifdef WIN32
+
 #ifdef USE_FFMPEG
 #pragma comment(lib, "lib\\avcodec.lib")
 #pragma comment(lib, "lib\\avutil.lib")
@@ -8,7 +10,61 @@
 #pragma comment(lib, "lib\\libopenh264.lib")
 #endif
 
+#endif
+
 #define MAX_YUV_SIZE (1024 * 1024 * 2)
+
+static bool YV12_to_RGB24(unsigned char* pYV12, unsigned char* pRGB24, int iWidth, int iHeight)
+{  
+	const long nYLen = (long)(iHeight * iWidth);  
+	const int nHfWidth = (iWidth >> 1); 
+
+	int rgb[3];  
+	int i, j, m, n, x, y;  
+	unsigned char* yData, *uData, *vData;
+
+	if(!pYV12 || !pRGB24)  
+		return 0;   
+
+	if(nYLen < 1 || nHfWidth < 1)   
+		return 0;  
+
+	yData = pYV12;  
+	uData = &yData[nYLen];  
+	vData = &uData[nYLen >> 2];  
+	if(!uData || !vData)  
+		return 0;  
+
+	m = -iWidth;  
+	n = -nHfWidth;  
+	for(y = 0; y < iHeight; y++)  
+	{  
+		m += iWidth;  
+
+		if(!(y % 2))  
+			n += nHfWidth;  
+
+		for(x=0; x < iWidth; x++)  
+		{  
+			i = m + x;  
+			j = n + (x>>1);  
+			rgb[2] = (int)(yData[i] + 1.370705 * (vData[j] - 128)); // r分量值  
+			rgb[1] = (int)(yData[i] - 0.698001 * (uData[j] - 128)  - 0.703125 * (vData[j] - 128)); // g分量值  
+			rgb[0] = (int)(yData[i] + 1.732446 * (uData[j] - 128)); // b分量值  
+			j = nYLen - iWidth - m + x;  
+			i = (j<<1) + j;  
+			for(j=0; j<3; j++)  
+			{  
+				if(rgb[j]>=0 && rgb[j]<=255)  
+					pRGB24[i + j] = rgb[j];  
+				else  
+					pRGB24[i + j] = (rgb[j] < 0) ? 0 : 255;  
+			}  
+		}  
+	}  
+
+	return 1;  
+}   
 
 H264Decoder *create_decoder()
 {
@@ -45,13 +101,13 @@ int initialize_decoder(H264Decoder *decoder)
 		return 0;
 	}
 #else
+	SDecodingParam decParam;
 	long rv = WelsCreateDecoder(&decoder->dec);
 	if (rv != 0)
 	{
 		return 0;
 	}
 
-	SDecodingParam decParam;
 	memset(&decParam, 0, sizeof(SDecodingParam));
 	decParam.eOutputColorFormat = videoFormatI420;
 	decParam.uiTargetDqLayer = UCHAR_MAX;
@@ -66,6 +122,7 @@ int initialize_decoder(H264Decoder *decoder)
 #endif
 
 	decoder->yuv = (char *)malloc(MAX_YUV_SIZE);
+	decoder->rgb= (char *)malloc(MAX_YUV_SIZE);
 
 	return 0;
 }
@@ -95,6 +152,11 @@ void destroy_decoder(H264Decoder *decoder)
 		free(decoder->yuv);
 	}
 
+	if (decoder->rgb)
+	{
+		free(decoder->rgb);
+	}
+
 	free(decoder);
 }
 
@@ -114,20 +176,22 @@ int decode_frame(H264Decoder *decoder, RtpStream *stream)
 	decoder->rect.w = decoder->context->width;
 	decoder->rect.h = decoder->context->height;
 
-	decoder->yuv_len = copy_data(decoder);
+	//decoder->yuv_len = copy_data(decoder);
 #else
+	DECODING_STATE rv;
 	memset(&decoder->bufInfo, 0, sizeof(decoder->bufInfo));
 	memset(decoder->data, 0, sizeof(decoder->data));
 	memset(&decoder->bufInfo, 0, sizeof(SBufferInfo));
 
-	DECODING_STATE rv = (*decoder->dec)->DecodeFrame2(decoder->dec, (unsigned char*)stream->frame_buffer, (int)stream->frame_len, decoder->data, &decoder->bufInfo);
+	rv = (*decoder->dec)->DecodeFrame2(decoder->dec, (unsigned char*)stream->frame_buffer, (int)stream->frame_len, decoder->data, &decoder->bufInfo);
 
 	if (decoder->bufInfo.iBufferStatus == 1)
 	{
+		LOGI("CXPlDecodeH264::Decode success");
 		decoder->rect.w = decoder->bufInfo.UsrData.sSystemBuffer.iWidth;
 		decoder->rect.h = decoder->bufInfo.UsrData.sSystemBuffer.iHeight;
-	
-		decoder->yuv_len = copy_data(decoder);
+
+		//decoder->yuv_len = copy_data(decoder);
 	}
 #endif
 
@@ -150,7 +214,7 @@ int copy_data(H264Decoder *decoder)
 
 	width = decoder->rect.w;
 	height = decoder->rect.h;
-	
+
 	for (i = 0; i < height; i++)
 	{
 		memcpy(out_yuv, yuv_data, width);
@@ -187,7 +251,7 @@ int copy_data(H264Decoder *decoder)
 
 	width = decoder->rect.w;
 	height = decoder->rect.h;
-	
+
 	for (i = 0; i < height; i++)
 	{
 		memcpy(out_yuv, yuv_data, width);
@@ -218,6 +282,7 @@ int copy_data(H264Decoder *decoder)
 		out_yuv += width;
 	}
 #endif
+	YV12_to_RGB24((unsigned char *)decoder->yuv, (unsigned char *)decoder->rgb, decoder->rect.w, decoder->rect.h);
 
 	return len;
 }
