@@ -112,39 +112,22 @@ void scheduler_start(Scheduler *schd)
 
 void scheduler_wait(Scheduler *schd)
 {
-	SDL_Event e;
-	RtspSession *session;
-	while (schd->running)
+	RtspSession *session = schd->session;
+	if (schd->session)
 	{
-		if (schd->session)
+		sock_fd_set(schd);
+		if (sock_select(schd) > 0)
 		{
-			sock_fd_set(schd);
-			if (sock_select(schd) > 0)
+			session = schd->session;
+			while (session)
 			{
-				session = schd->session;
-				while (session)
+				if (session->is_set)
 				{
-					if (session->is_set)
-					{
-						session_process(schd->surface, session);
-						session->is_set = 0;
-					}
-					session = session->next;
+					session_process(schd->surface, session);
+					session->is_set = 0;
 				}
+				session = session->next;
 			}
-		}
-
-		if (SDL_PollEvent(&e)) 
-		{
-			if (e.type == SDL_QUIT  || e.type == SDL_FINGERDOWN) 
-			{
-				break;
-			}
-			else if (e.type == SDL_KEYDOWN)
-			{
-				break;
-			}
-			//LOGI("%d\n", e.type);
 		}
 	}
 }

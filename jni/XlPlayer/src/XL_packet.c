@@ -56,9 +56,18 @@ int send_packet(RtspPacket *pack)
 	return 0;
 }
 
+//static FILE *fp = NULL;
 int recv_packet(RtspPacket *pack, int offset)
 {
 	recv(pack->sock, pack->recv_buffer + offset, pack->recv_len, 0);
+	//if (fp == NULL)
+	//{
+	//	fopen_s(&fp, "test.xl", "wb+");
+	//}
+	//if (fp != NULL)
+	//{
+	//	fwrite(pack->recv_buffer + offset, 1, pack->recv_len, fp);
+	//}
 	LOGI("recv len = %d\n", pack->recv_len);
 
 	return 0;

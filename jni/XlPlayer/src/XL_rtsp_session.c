@@ -72,7 +72,7 @@ void initialize_session(RtspSession *session, const char *addr, short port, cons
 #else
 	sprintf(uri, src_uri, vec_id, channel);
 #endif
-	base64_in(uri, session->uri, strlen(uri));
+	base64_in((unsigned char *)uri, session->uri, strlen(uri));
 
 	session->packet = create_packet();
 	initialize_packet(session->packet, addr, port);
@@ -168,7 +168,7 @@ void session_start(RtspSession *session)
 
  void session_stop(RtspSession *session)
  {
-
+	 rtsp_teardown(session);
  }
 
  void set_session_index(RtspSession *session, int index)
