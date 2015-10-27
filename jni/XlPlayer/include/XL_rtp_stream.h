@@ -3,22 +3,19 @@
 
 #include "XL_packet.h"
 
-enum packet_state
-{
+enum packet_state {
 	packet_init = 1,
 	packet_head,
 	packet_body,
 };
 
-enum stream_state
-{
+enum stream_state {
 	stream_begin = 1,
 	stream_continue,
 	stream_complate,
 };
 
-enum frame_type
-{
+enum frame_type {
 	frame_unknow = 1,
 	frame_pps,
 	frame_sps,
@@ -29,8 +26,7 @@ enum frame_type
 
 #pragma pack(push)
 #pragma pack(1)
-typedef struct RtpHeader
-{
+typedef struct RtpHeader {
 	unsigned short rtsp_head;
 	unsigned short length;
 
@@ -47,24 +43,21 @@ typedef struct RtpHeader
 	unsigned int ssrc;
 } RtpHeader;
 
-typedef struct  NaluHeader
-{
+typedef struct  NaluHeader {
 	//byte 0
 	unsigned char TYPE : 5;
 	unsigned char NRI : 2;
 	unsigned char F : 1;
 } NaluHeader; /**//* 1 BYTES */
 
-typedef struct FuIndicator
-{
+typedef struct FuIndicator {
 	//byte 0
 	unsigned char TYPE : 5;
 	unsigned char NRI : 2;
 	unsigned char F : 1;
 } FuIndicator; /**//* 1 BYTES */
 
-typedef struct FuHeader
-{
+typedef struct FuHeader {
 	//byte 0
 	unsigned char TYPE : 5;
 	unsigned char R : 1;
@@ -73,8 +66,7 @@ typedef struct FuHeader
 } FuHeader; /**//* 1 BYTES */
 
 
-typedef struct RtpStream
-{
+typedef struct RtpStream {
 	char *frame_buffer;
 	int frame_len;
 	int packet_state;
@@ -89,11 +81,8 @@ extern "C" {
 #endif
 
 extern RtpStream *create_rtp_stream();
-extern int initialize_rtp_stream(RtpStream *stream);
 extern void destroy_rtp_stream(RtpStream *stream);
-
 extern int read_rtp_packet(RtspPacket *pack, RtpStream *stream);
-extern void process_rtp_packet(RtspPacket *sock, RtpStream *stream);
 
 #ifdef __cplusplus
 }

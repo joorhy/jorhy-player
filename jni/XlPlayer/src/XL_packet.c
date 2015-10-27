@@ -3,20 +3,14 @@
 
 #define MAX_PACKET_SIZE 8192
 
-RtspPacket *create_packet()
-{
+RtspPacket *create_packet(const char *addr, short port) {
+	struct sockaddr_in sockaddrServer;
+	int ret, addr_len;
+	
 	RtspPacket *pack = (RtspPacket *)malloc(sizeof(RtspPacket));
 	memset(pack, 0, sizeof(RtspPacket));
-	return pack;
-}
 
-int initialize_packet(RtspPacket *pack, const char *addr, short port)
-{
-	struct sockaddr_in sockaddrServer;
-	int ret;
-	int addr_len;
-
-#ifdef WIN32
+	#ifdef WIN32
 	WSADATA wsa={0};
     WSAStartup(MAKEWORD(2,2),&wsa);
 #endif 
@@ -31,43 +25,29 @@ int initialize_packet(RtspPacket *pack, const char *addr, short port)
 	ret = connect(pack->sock, (struct sockaddr*)&sockaddrServer, addr_len);
 
 	pack->recv_buffer = (char *)malloc(MAX_PACKET_SIZE);
-
-	return 0;
+	
+	return pack;
 }
 
-void destroy_packet(RtspPacket *pack)
-{
-	if (pack->sock != j_invalid_sosket)
-	{
+void destroy_packet(RtspPacket *pack) {
+	if (pack->sock != j_invalid_sosket) {
 		j_close_socket(pack->sock);
 	}
 	free(pack);
 }
 
-void clear_recv_buff(RtspPacket *pack)
-{
+void clear_recv_buff(RtspPacket *pack) {
 	memset(pack->recv_buffer, 0, MAX_PACKET_SIZE);
 }
 
-int send_packet(RtspPacket *pack)
-{
+int send_packet(RtspPacket *pack) {
 	send(pack->sock, pack->send_buffer, pack->send_len, 0);
 
 	return 0;
 }
 
-//static FILE *fp = NULL;
-int recv_packet(RtspPacket *pack, int offset)
-{
+int recv_packet(RtspPacket *pack, int offset) {
 	recv(pack->sock, pack->recv_buffer + offset, pack->recv_len, 0);
-	//if (fp == NULL)
-	//{
-	//	fopen_s(&fp, "test.xl", "wb+");
-	//}
-	//if (fp != NULL)
-	//{
-	//	fwrite(pack->recv_buffer + offset, 1, pack->recv_len, fp);
-	//}
 	LOGI("recv len = %d\n", pack->recv_len);
 
 	return 0;

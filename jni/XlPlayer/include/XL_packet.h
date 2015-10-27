@@ -23,8 +23,7 @@ typedef int j_socket_t;
 
 #endif
 
-typedef struct RtspPacket
-{
+typedef struct RtspPacket {
 	j_socket_t sock;
 	char *send_buffer;
 	int send_len;
@@ -37,8 +36,7 @@ typedef struct RtspPacket
 extern "C" {
 #endif
 
-extern RtspPacket *create_packet();
-extern int initialize_packet(RtspPacket *sock, const char *addr, short port);
+extern RtspPacket *create_packet(const char *addr, short port);
 extern void destroy_packet(RtspPacket *sock);
 extern void clear_recv_buff(RtspPacket *sock);
 extern int send_packet(RtspPacket *sock);

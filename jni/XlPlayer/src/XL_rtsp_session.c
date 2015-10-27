@@ -49,18 +49,96 @@ static const char *teardown =
 "CSeq: %d\r\n"
 "User-Agent: GPSViewer (6.1.0.1 2012-06-14)\r\n\r\n";
 
-RtspSession *create_session()
-{
-	RtspSession *session = (RtspSession *)malloc(sizeof(RtspSession));
-	memset(session, 0, sizeof(RtspSession));
+void rtsp_option(RtspSession *session) {
+	char cmd_buffer[1024] = { 0 };
+	session->session_state = option_state;
 
-	return session;
+#ifdef WIN32
+	sprintf_s(cmd_buffer, sizeof(cmd_buffer), option, session->addr, session->port, session->uri, session->cseq++);
+#else
+	sprintf(cmd_buffer, option, session->addr, session->port, session->uri, session->cseq++);
+#endif
+	session->packet->send_buffer = (char *)cmd_buffer;
+	session->packet->send_len = strlen(cmd_buffer);
+	send_packet(session->packet);
+ }
+
+void rtsp_describe(RtspSession *session) {
+	char cmd_buffer[1024] = { 0 };
+	session->session_state = describe_state;
+
+#ifdef WIN32
+	sprintf_s(cmd_buffer, sizeof(cmd_buffer), describe, session->addr, session->port, session->uri, session->cseq++);
+#else
+	sprintf(cmd_buffer, describe, session->addr, session->port, session->uri, session->cseq++);
+#endif
+	session->packet->send_buffer = (char *)cmd_buffer;
+	session->packet->send_len = strlen(cmd_buffer);
+	send_packet(session->packet);
 }
 
-void initialize_session(RtspSession *session, const char *addr, short port, const char *vec_id, int channel)
-{
+void rtsp_setup_video(RtspSession *session) {
+	char cmd_buffer[1024] = { 0 };
+	session->session_state = setup_video_state;
+
+#ifdef WIN32
+	sprintf_s(cmd_buffer, sizeof(cmd_buffer), setup_v, session->addr, session->port, session->uri, session->cseq++);
+#else
+	sprintf(cmd_buffer, setup_v, session->addr, session->port, session->uri, session->cseq++);
+#endif
+	session->packet->send_buffer = (char *)cmd_buffer;
+	session->packet->send_len = strlen(cmd_buffer);
+	send_packet(session->packet);
+}
+
+void rtsp_setup_audio(RtspSession *session) {
+	char cmd_buffer[1024] = { 0 };
+	session->session_state = setup_audio_state;
+
+#ifdef WIN32
+	sprintf_s(cmd_buffer, sizeof(cmd_buffer), setup_a, session->addr, session->port, session->uri, session->cseq++);
+#else
+	sprintf(cmd_buffer, setup_a, session->addr, session->port, session->uri, session->cseq++);
+#endif
+	session->packet->send_buffer = (char *)cmd_buffer;
+	session->packet->send_len = strlen(cmd_buffer);
+	send_packet(session->packet);
+}
+
+void rtsp_play(RtspSession *session) {
+	char cmd_buffer[1024] = { 0 };
+	session->session_state = play_state;
+
+#ifdef WIN32
+	sprintf_s(cmd_buffer, sizeof(cmd_buffer), play, session->addr, session->port, session->uri, session->cseq++);
+#else
+	sprintf(cmd_buffer, play, session->addr, session->port, session->uri, session->cseq++);
+#endif
+	session->packet->send_buffer = (char *)cmd_buffer;
+	session->packet->send_len = strlen(cmd_buffer);
+	send_packet(session->packet);
+}
+
+void rtsp_teardown(RtspSession *session) {
+	char cmd_buffer[1024] = { 0 };
+	session->session_state = teardown_state;
+
+#ifdef WIN32
+	sprintf_s(cmd_buffer, sizeof(cmd_buffer), teardown, session->addr, session->port, session->uri, session->cseq++);
+#else
+	sprintf(cmd_buffer, teardown, session->addr, session->port, session->uri, session->cseq++);
+#endif
+	session->packet->send_buffer = (char *)cmd_buffer;
+	session->packet->send_len = strlen(cmd_buffer);
+	send_packet(session->packet);
+}
+
+RtspSession *create_session(const char *addr, short port, const char *vec_id, int channel, int index) {
 	/*make base64 code of uri*/
 	char uri[64] = { 0 };
+
+	RtspSession *session = (RtspSession *)malloc(sizeof(RtspSession));
+	memset(session, 0, sizeof(RtspSession));
 
 	session->session_state = init_state;
 	session->cseq = 1;
@@ -74,25 +152,22 @@ void initialize_session(RtspSession *session, const char *addr, short port, cons
 #endif
 	base64_in((unsigned char *)uri, session->uri, strlen(uri));
 
-	session->packet = create_packet();
-	initialize_packet(session->packet, addr, port);
-
+	session->packet = create_packet(addr, port);
 	session->stream = create_rtp_stream();
-	initialize_rtp_stream(session->stream);
-
 	session->decoder = create_decoder();
-	initialize_decoder(session->decoder);
+
+	session->index = index;
+
+	return session;
 }
 
-void destroy_session(RtspSession *session)
-{
+void destroy_session(RtspSession *session) {
 	destroy_packet(session->packet);
 	destroy_rtp_stream(session->stream);
 	destroy_decoder(session->decoder);
 }
 
-void recv_rtsp_str(RtspSession *session)
-{
+void recv_rtsp_str(RtspSession *session) {
 	int offset = 0;
 	char *pContent;
 	clear_recv_buff(session->packet);
@@ -116,33 +191,24 @@ void recv_rtsp_str(RtspSession *session)
 	}
 }
 
-void session_process(JoSurface *surface, RtspSession *session)
-{
-	if (session->session_state == stream_state)
-	{
+void session_process(JoSurface *surface, RtspSession *session) {
+	if (session->session_state == stream_state) {
 		read_rtp_packet(session->packet, session->stream);
-		if (session->stream->stream_state == stream_complate)
-		{
-			if (session->stream->frame_type == frame_i || session->stream->frame_type == frame_p)
-			{
+		if (session->stream->stream_state == stream_complate) {
+			if (session->stream->frame_type == frame_i || session->stream->frame_type == frame_p) {
 				decode_frame(session->decoder, session->stream);
 				render_frame(surface, session->decoder, session->index);
 
 				session->stream->stream_state = stream_begin;
 				session->stream->frame_len = 0;
 				session->stream->frame_type = frame_unknow;
-			}
-			else
-			{
+			} else {
 				session->stream->stream_state = stream_begin;
 			}
 		}
-	}
-	else
-	{
+	} else {
 		recv_rtsp_str(session);
-		switch (session->session_state)
-		{
+		switch (session->session_state) {
 		case option_state:
 			rtsp_describe(session);
 			break;
@@ -161,107 +227,10 @@ void session_process(JoSurface *surface, RtspSession *session)
 	}
 }
 
-void session_start(RtspSession *session)
-{
+void session_start(RtspSession *session) {
 	rtsp_option(session);
 }
 
- void session_stop(RtspSession *session)
- {
+ void session_stop(RtspSession *session) {
 	 rtsp_teardown(session);
  }
-
- void set_session_index(RtspSession *session, int index)
- {
-	 session->index = index;
- }
-
- void rtsp_option(RtspSession *session)
- {
-	char cmd_buffer[1024] = { 0 };
-	session->session_state = option_state;
-
-#ifdef WIN32
-	sprintf_s(cmd_buffer, sizeof(cmd_buffer), option, session->addr, session->port, session->uri, session->cseq++);
-#else
-	sprintf(cmd_buffer, option, session->addr, session->port, session->uri, session->cseq++);
-#endif
-	session->packet->send_buffer = (char *)cmd_buffer;
-	session->packet->send_len = strlen(cmd_buffer);
-	send_packet(session->packet);
- }
-
-void rtsp_describe(RtspSession *session)
-{
-	char cmd_buffer[1024] = { 0 };
-	session->session_state = describe_state;
-
-#ifdef WIN32
-	sprintf_s(cmd_buffer, sizeof(cmd_buffer), describe, session->addr, session->port, session->uri, session->cseq++);
-#else
-	sprintf(cmd_buffer, describe, session->addr, session->port, session->uri, session->cseq++);
-#endif
-	session->packet->send_buffer = (char *)cmd_buffer;
-	session->packet->send_len = strlen(cmd_buffer);
-	send_packet(session->packet);
-}
-
-void rtsp_setup_video(RtspSession *session)
-{
-	char cmd_buffer[1024] = { 0 };
-	session->session_state = setup_video_state;
-
-#ifdef WIN32
-	sprintf_s(cmd_buffer, sizeof(cmd_buffer), setup_v, session->addr, session->port, session->uri, session->cseq++);
-#else
-	sprintf(cmd_buffer, setup_v, session->addr, session->port, session->uri, session->cseq++);
-#endif
-	session->packet->send_buffer = (char *)cmd_buffer;
-	session->packet->send_len = strlen(cmd_buffer);
-	send_packet(session->packet);
-}
-
-void rtsp_setup_audio(RtspSession *session)
-{
-	char cmd_buffer[1024] = { 0 };
-	session->session_state = setup_audio_state;
-
-#ifdef WIN32
-	sprintf_s(cmd_buffer, sizeof(cmd_buffer), setup_a, session->addr, session->port, session->uri, session->cseq++);
-#else
-	sprintf(cmd_buffer, setup_a, session->addr, session->port, session->uri, session->cseq++);
-#endif
-	session->packet->send_buffer = (char *)cmd_buffer;
-	session->packet->send_len = strlen(cmd_buffer);
-	send_packet(session->packet);
-}
-
-void rtsp_play(RtspSession *session)
-{
-	char cmd_buffer[1024] = { 0 };
-	session->session_state = play_state;
-
-#ifdef WIN32
-	sprintf_s(cmd_buffer, sizeof(cmd_buffer), play, session->addr, session->port, session->uri, session->cseq++);
-#else
-	sprintf(cmd_buffer, play, session->addr, session->port, session->uri, session->cseq++);
-#endif
-	session->packet->send_buffer = (char *)cmd_buffer;
-	session->packet->send_len = strlen(cmd_buffer);
-	send_packet(session->packet);
-}
-
-void rtsp_teardown(RtspSession *session)
-{
-	char cmd_buffer[1024] = { 0 };
-	session->session_state = teardown_state;
-
-#ifdef WIN32
-	sprintf_s(cmd_buffer, sizeof(cmd_buffer), teardown, session->addr, session->port, session->uri, session->cseq++);
-#else
-	sprintf(cmd_buffer, teardown, session->addr, session->port, session->uri, session->cseq++);
-#endif
-	session->packet->send_buffer = (char *)cmd_buffer;
-	session->packet->send_len = strlen(cmd_buffer);
-	send_packet(session->packet);
-}

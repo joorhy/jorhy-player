@@ -4,8 +4,7 @@
 const char b64[] =
 "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-char ascii[256] =
-{
+char ascii[256] = {
   64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
   64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
   64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 62, 64, 64, 64, 63,
@@ -24,26 +23,20 @@ char ascii[256] =
   64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64
 };
 
-void base64_in (unsigned char *buf, char *obuf, int len)
-{
+void base64_in (unsigned char *buf, char *obuf, int len) {
   int i;
-  for (i = 0; i < len - 2; i += 3)
-    {
+  for (i = 0; i < len - 2; i += 3) {
       *obuf++ = b64[(buf[i] >> 2) & 0x3F];
       *obuf++ = b64[((buf[i] & 0x3) << 4 | ((int) (buf[i + 1] & 0xF0) >> 4))];
       *obuf++ = b64[((buf[i + 1] & 0xF) << 2) | ((int) (buf[i + 2] & 0xC0) >> 6)];
       *obuf++ = b64[buf[i + 2] & 0x3F];
     }
-  if (i < len)
-    {
+  if (i < len) {
       *obuf++ = b64[(buf[i] >> 2) & 0x3F];
-      if (i == (len - 1))
-	{
+      if (i == (len - 1)) {
 	  *obuf++ = b64[((buf[i] & 0x3) << 4)];
         *obuf++ = '=';
-	}
-      else
-	{
+	} else {
 	  *obuf++ = b64[((buf[i] & 0x3) << 4 | ((int) (buf[i + 1] & 0xf0) >> 4))];
 	  *obuf++ = b64[((buf[i + 1] & 0xf) << 2)];
 	}
@@ -52,16 +45,14 @@ void base64_in (unsigned char *buf, char *obuf, int len)
   *obuf++ = '\0';
 }
 
-void base64_out (char *buf, unsigned char *obuf, int len)
-{
+void base64_out (char *buf, unsigned char *obuf, int len) {
   int nprbytes;
   char *p = buf;
   while (ascii[(int) *(p++)] <= 63);
 
   nprbytes = len - 1;
 
-  while (nprbytes > 4 && *buf != '\0')
-    {
+  while (nprbytes > 4 && *buf != '\0') {
       *(obuf++) = (ascii[(int) *buf] << 2 | ascii[(int) buf[1]] >> 4);
       *(obuf++) = (ascii[(int) buf[1]] << 4 | ascii[(int) buf[2]] >> 2);
       *(obuf++) = (ascii[(int) buf[2]] << 6 | ascii[(int) buf[3]]);
@@ -69,13 +60,10 @@ void base64_out (char *buf, unsigned char *obuf, int len)
       nprbytes -= 4;
     }
   if (nprbytes > 1)
-    *(obuf++) =
-      (ascii[(int) *buf] << 2 | ascii[(int) buf[1]] >> 4);
+    *(obuf++) = (ascii[(int) *buf] << 2 | ascii[(int) buf[1]] >> 4);
   if (nprbytes > 2)
-    *(obuf++) =
-      (ascii[(int) buf[1]] << 4 | ascii[(int) buf[2]] >> 2);
+    *(obuf++) = (ascii[(int) buf[1]] << 4 | ascii[(int) buf[2]] >> 2);
   if (nprbytes > 3)
-    *(obuf++) =
-      (ascii[(int) buf[2]] << 6 | ascii[(int) buf[3]]);
+    *(obuf++) = (ascii[(int) buf[2]] << 6 | ascii[(int) buf[3]]);
   *(obuf)++ = '\0';
 }

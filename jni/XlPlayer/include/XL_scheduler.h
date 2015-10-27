@@ -7,13 +7,10 @@
 #include "SDL_thread.h"
 #include "SDL_mutex.h"
 
-typedef struct Scheduler
-{
-	RtspSession *session;
-	SDL_Thread *thread;
+typedef struct Scheduler {
+	RtspSession *list;
 	SDL_mutex *lock;
 	JoSurface *surface;
-	int running;
 	fd_set readfds;
 	struct timeval tv;
 } Scheduler;
@@ -23,13 +20,10 @@ typedef struct Scheduler
 extern "C" {
 #endif
 
-extern Scheduler *create_scheduler();
-extern void initialize_scheduler(Scheduler *schd, void *native_windows);
-extern void scheduler_start(Scheduler *schd);
-extern void scheduler_wait(Scheduler *schd);
-extern void scheduler_stop(Scheduler *schd);
+extern Scheduler *create_scheduler(void *native_windows, int mode);
+extern void scheduler_process(Scheduler *schd);
 extern void destroy_scheduler(Scheduler *schd);
-extern int schedule_func(void *data);
+
 extern void add_session(Scheduler *schd, RtspSession *session);
 extern void del_session(Scheduler *schd, RtspSession *session);
 

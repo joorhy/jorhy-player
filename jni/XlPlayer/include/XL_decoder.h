@@ -21,8 +21,7 @@ extern "C" {
 #include "codec_ver.h"
 #endif
 
-typedef struct H264Decoder
-{
+typedef struct H264Decoder {
 #ifdef USE_FFMPEG
 	// for decoder resource(ffmpeg)
 	AVCodecContext *context;
@@ -42,10 +41,8 @@ typedef struct H264Decoder
 } H264Decoder;
 
 extern H264Decoder *create_decoder();
-extern int initialize_decoder(H264Decoder *decoder);
 extern void destroy_decoder(H264Decoder *decoder);
 extern int decode_frame(H264Decoder *decoder, RtpStream *stream);
-extern int copy_data(H264Decoder *decoder);
 
 #ifdef __cplusplus
 }

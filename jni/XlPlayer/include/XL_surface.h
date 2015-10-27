@@ -3,15 +3,13 @@
 #include "SDL.h"
 #include "XL_decoder.h"
 
-enum SurfaceMode
-{
-	mode_1 = 1,		/* 1x1 */
-	mode_2 = 2,		/* 1x2 */
-	mode_4 = 4,		/* 2x2 */
+enum SurfaceMode {
+	modeA = 1,		/* 1x1 */
+	modeB = 2,		/* 1x2 */
+	modeC = 4,		/* 2x2 */
 };
 
-typedef struct JoSurface
-{
+typedef struct JoSurface {
 	SDL_Window * screen;
 	SDL_Renderer* render;
 	SDL_Texture* texture[4];
@@ -23,9 +21,7 @@ typedef struct JoSurface
 extern "C" {
 #endif
 
-extern JoSurface *create_surface();
-extern int initialize_surface(JoSurface *surface, void *native_windows);
-extern void set_surface_mode(JoSurface *surface, int mode);
+extern JoSurface *create_surface(void *native_windows, int mode);
 extern void render_frame(JoSurface *surface, H264Decoder *decoder, int index);
 extern void destroy_surface(JoSurface *surface);
 
