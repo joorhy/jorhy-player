@@ -19,7 +19,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v120_xp</PlatformToolset>
+    <PlatformToolset>v110_xp</PlatformToolset>
     <CharacterSet>NotSet</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -98,6 +98,7 @@
     <ClInclude Include="..\..\include\XL_decoder.h" />
     <ClInclude Include="..\..\include\XL_log.h" />
     <ClInclude Include="..\..\include\XL_packet.h" />
+    <ClInclude Include="..\..\include\XL_player.h" />
     <ClInclude Include="..\..\include\XL_rtp_stream.h" />
     <ClInclude Include="..\..\include\XL_rtsp_session.h" />
     <ClInclude Include="..\..\include\XL_scheduler.h" />

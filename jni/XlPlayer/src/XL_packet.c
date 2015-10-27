@@ -6,14 +6,15 @@
 RtspPacket *create_packet(const char *addr, short port) {
 	struct sockaddr_in sockaddrServer;
 	int ret, addr_len;
-	
-	RtspPacket *pack = (RtspPacket *)malloc(sizeof(RtspPacket));
-	memset(pack, 0, sizeof(RtspPacket));
+	RtspPacket *pack;
 
-	#ifdef WIN32
+#ifdef WIN32
 	WSADATA wsa={0};
     WSAStartup(MAKEWORD(2,2),&wsa);
-#endif 
+#endif
+
+	pack = (RtspPacket *)malloc(sizeof(RtspPacket));
+	memset(pack, 0, sizeof(RtspPacket)); 
 	pack->sock = socket(AF_INET, SOCK_STREAM, 0);
 
 	addr_len = sizeof(sockaddrServer);
@@ -32,6 +33,10 @@ RtspPacket *create_packet(const char *addr, short port) {
 void destroy_packet(RtspPacket *pack) {
 	if (pack->sock != j_invalid_sosket) {
 		j_close_socket(pack->sock);
+	}
+
+	if (pack->recv_buffer) {
+		free(pack->recv_buffer);
 	}
 	free(pack);
 }

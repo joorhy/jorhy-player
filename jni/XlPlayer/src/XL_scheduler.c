@@ -75,6 +75,12 @@ void scheduler_process(Scheduler *schd) {
 				session = session->next;
 			}
 		}
+	} else {
+#ifdef WIN32
+		Sleep(1);
+#else
+		usleep(1000);
+#endif
 	}
 }
 

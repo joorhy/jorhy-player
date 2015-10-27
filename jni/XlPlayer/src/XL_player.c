@@ -6,7 +6,7 @@
 #include <string.h>
 
 #ifdef WIN32
-#pragma comment( linker, "/subsystem:\"windows\" /entry:\"mainCRTStartup\"")
+//#pragma comment( linker, "/subsystem:\"windows\" /entry:\"mainCRTStartup\"")
 #undef main
 #endif 
 
@@ -23,10 +23,9 @@ static int channelB;
 extern void start_play();
 extern void stop_play();
 
+static int isPaused = 1;
+static int isRunning = 1;
 int main(int argc, char *argv[]) {
-	static int isPaused = 1;
-	static int isRunning = 1;
-	
 	SDL_Event e;
 	schd = create_scheduler(NULL, modeB);
 
@@ -36,19 +35,22 @@ int main(int argc, char *argv[]) {
 	}
 
 	memset(serverAddr, 0, sizeof(serverAddr));
-	strcpy(serverAddr, argv[1]);
+	memcpy(serverAddr, argv[1], strlen(argv[1]));
 	serverPort = atoi(argv[2]);
 	memset (vehA, 0, sizeof(vehA));
-	strcpy (vehA, argv[3]);
+	memcpy (vehA, argv[3], strlen(argv[3]));
 	channelA = atoi(argv[4]);
 	if (argc == 7)
 	{
 		memset (vehB, 0, sizeof(vehB));
-		strcpy (vehB, argv[5]);
-		channelA = atoi(argv[6]);
+		memcpy (vehB, argv[5], strlen(argv[5]));
+		channelB = atoi(argv[6]);
 	}
-	
 
+#ifdef __ANDROID__
+	isPaused = 0;
+	start_play();
+#endif 
 	while (isRunning) {
 		if (SDL_PollEvent(&e))  {
 			if (e.type == SDL_QUIT  || e.type == SDL_FINGERDOWN) {
@@ -56,33 +58,28 @@ int main(int argc, char *argv[]) {
 				break;
 			}
 
+#ifdef WIN32
 			if (isPaused) {
-			#ifdef __ANDROID__
-				if(e.type == SDL_APP_WILLENTERFOREGROUND || e.type == SDL_APP_DIDENTERFOREGROUND) {
-			#else
-				if(e.type == SDL_KEYDOWN &&  e.key.keysym.sym == SDLK_SPACE) {
-			#endif
+				if(e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_SPACE) {
+
 					isPaused = 0;
 					start_play();
 					LOGI("Resume \n");
 				}
 			} else {
-			#ifdef __ANDROID__
-				if(e.type == SDL_APP_WILLENTERBACKGROUND || e.type == SDL_APP_DIDENTERBACKGROUND) {
-			#else
-				if(e.type == SDL_KEYDOWN &&  e.key.keysym.sym == SDLK_SPACE) {
-			#endif
+				if(e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_SPACE) {
 					isPaused = 1;
 					stop_play();
 					LOGI("Pause \n");
 				}
 			}
+#endif
 		}
 		scheduler_process(schd);
 	}
 
 	destroy_scheduler(schd);
-	
+
 	return 0;
 }
 
@@ -99,13 +96,13 @@ void start_play() {
 
 void stop_play() {
 	session_stop(sessionA);
-	session_stop(sessionA);
+	session_stop(sessionB);
 
 	del_session(schd, sessionA);
-	del_session(schd, sessionA);
-	
+	del_session(schd, sessionB);
+
 	destroy_session(sessionA);
-	destroy_session(sessionA);
+	destroy_session(sessionB);
 }
 
 #ifdef __ANDROID__
@@ -117,33 +114,58 @@ void stop_play() {
 extern void SDL_Android_Init(JNIEnv* env, jclass cls);
 
 void Java_org_libsdl_app_SDLActivity_nativeInit(JNIEnv* env, jclass cls, jstring parm) {
-    /* This interface could expand with ABI negotiation, calbacks, etc. */
-    SDL_Android_Init(env, cls);
-    LOGI("Java_com_jorhy_player_PlayerActivity_nativeInit SDL_Android_Init success");
-	
-    SDL_SetMainReady();
-    LOGI("Java_com_jorhy_player_PlayerActivity_nativeInit SDL_SetMainReady success");
+	/* This interface could expand with ABI negotiation, calbacks, etc. */
+	SDL_Android_Init(env, cls);
+	LOGI("Java_com_jorhy_player_PlayerActivity_nativeInit SDL_Android_Init success");
 
-    /* Run the application code! */
-    int status;
-    char *argv[7];
-    argv[0] = SDL_strdup("SDL_app");
+	SDL_SetMainReady();
+	LOGI("Java_com_jorhy_player_PlayerActivity_nativeInit SDL_SetMainReady success");
 
-    const char *argvStr = (*env)->GetStringUTFChars(env, parm, 0);
-   // use your string
-   int argc = 1;
-   const char *sep = ",";
-   char *p = strtok((char *)argvStr, sep);
-   while (p) {
-   	LOGI("Java_com_jorhy_player_PlayerActivity_nativeInit SDL_Android_Init param%d = %s", argc, p);
-	argv[argc] = p;
-	++argc;
-   }
-   (*env)->ReleaseStringUTFChars(env, parm, argvStr);
-   
-    status = SDL_main(argc, argv);
+	/* Run the application code! */
+	int status;
+	char *argv[7];
+	argv[0] = SDL_strdup("SDL_app");
 
-    /* Do not issue an exit or the whole application will terminate instead of just the SDL thread */
-    /* exit(status); */
+	const char *argvStr = (*env)->GetStringUTFChars(env, parm, 0);
+	LOGI("Java_com_jorhy_player_PlayerActivity_nativeInit argvStr = %s", argvStr);
+	// use your string
+	int argc = 1;
+	const char *sep = ",";
+	char *p = strtok((char *)argvStr, sep);
+	while (p) {
+		LOGI("Java_com_jorhy_player_PlayerActivity_nativeInit param%d = %s", argc, p);
+		argv[argc] = (char *)malloc(strlen(p) + 1);
+		memset(argv[argc], 0, strlen(p) + 1);
+		memcpy(argv[argc], p, strlen(p));
+		++argc;
+		p = strtok(NULL, sep);
+	}
+	(*env)->ReleaseStringUTFChars(env, parm, argvStr);
+
+	status = SDL_main(argc, argv);
+
+	/* Do not issue an exit or the whole application will terminate instead of just the SDL thread */
+	/* exit(status); */
+}
+
+void Java_org_libsdl_app_SDLActivity_startPlay(JNIEnv* env, jclass cls) {
+	if (isPaused) {
+		isPaused = 0;
+		start_play();
+		LOGI("Java_org_libsdl_app_SDLActivity_startPlay \n");
+	}
+}
+
+void Java_org_libsdl_app_SDLActivity_stopPlay(JNIEnv* env, jclass cls) {
+	if (!isPaused) {
+		isPaused = 1;
+		stop_play();
+		LOGI("Java_org_libsdl_app_SDLActivity_stopPlay \n");
+	}
+}
+
+void Java_org_libsdl_app_SDLActivity_exitPlay(JNIEnv* env, jclass cls) {
+	LOGI("Java_org_libsdl_app_SDLActivity_exitPlay \n");
+	isRunning = 0;
 }
 #endif

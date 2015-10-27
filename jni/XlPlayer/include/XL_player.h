@@ -10,7 +10,9 @@ extern "C" {
 
 #ifdef __ANDROID__
 #include <jni.h>
-extern void Java_com_jorhy_player_PlayerActivity_nativeInit(JNIEnv* env, jclass cls, jobject obj);
+extern void Java_org_libsdl_app_SDLActivity_nativeInit(JNIEnv* env, jclass cls, jstring parm);
+extern void Java_org_libsdl_app_SDLActivity_startPlay(JNIEnv* env, jclass cls);
+extern void Java_org_libsdl_app_SDLActivity_stopPlay(JNIEnv* env, jclass cls);
 #endif
 
 /* Ends C function definitions when using C++ */

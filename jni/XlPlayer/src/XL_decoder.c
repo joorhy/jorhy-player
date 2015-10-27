@@ -145,11 +145,13 @@ int copy_data(H264Decoder *decoder) {
 }
 
 H264Decoder *create_decoder() {
-	H264Decoder *decoder = (H264Decoder *)malloc(sizeof(H264Decoder));
+	SDecodingParam decParam;
+	long rv;
+	H264Decoder *decoder;
+
+	decoder	= (H264Decoder *)malloc(sizeof(H264Decoder));
 	memset(decoder, 0, sizeof(H264Decoder));
-
 #ifdef USE_FFMPEG
-
 #if LIBAVCODEC_VERSION_MAJOR < 54
 	avcodec_init();
 #endif
@@ -171,8 +173,8 @@ H264Decoder *create_decoder() {
 		return 0;
 	}
 #else
-	SDecodingParam decParam;
-	long rv = WelsCreateDecoder(&decoder->dec);
+	
+	rv = WelsCreateDecoder(&decoder->dec);
 	if (rv != 0) {
 		return 0;
 	}
