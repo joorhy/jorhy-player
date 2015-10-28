@@ -24,7 +24,7 @@ extern void start_play();
 extern void stop_play();
 
 static int isPaused = 1;
-static int isRunning = 1;
+static int isRunning = 0;
 int main(int argc, char *argv[]) {
 	SDL_Event e;
 	schd = create_scheduler(NULL, modeB);
@@ -47,10 +47,7 @@ int main(int argc, char *argv[]) {
 		channelB = atoi(argv[6]);
 	}
 
-#ifdef __ANDROID__
-	isPaused = 0;
-	start_play();
-#endif 
+	isRunning = 1;
 	while (isRunning) {
 		if (SDL_PollEvent(&e))  {
 			if (e.type == SDL_QUIT  || e.type == SDL_FINGERDOWN) {
@@ -84,25 +81,29 @@ int main(int argc, char *argv[]) {
 }
 
 void start_play() {
-	sessionA = create_session(serverAddr, serverPort, vehA, channelA, 0);
-	add_session(schd, sessionA);
+	if (isRunning) {
+		sessionA = create_session(serverAddr, serverPort, vehA, channelA, 0);
+		add_session(schd, sessionA);
 
-	sessionB = create_session(serverAddr, serverPort, vehB, channelB, 1);
-	add_session(schd, sessionB);
+		sessionB = create_session(serverAddr, serverPort, vehB, channelB, 1);
+		add_session(schd, sessionB);
 
-	session_start(sessionA);
-	session_start(sessionB);
+		session_start(sessionA);
+		session_start(sessionB);
+	}
 }
 
 void stop_play() {
-	session_stop(sessionA);
-	session_stop(sessionB);
+	if (isRunning) {
+		session_stop(sessionA);
+		session_stop(sessionB);
 
-	del_session(schd, sessionA);
-	del_session(schd, sessionB);
+		del_session(schd, sessionA);
+		del_session(schd, sessionB);
 
-	destroy_session(sessionA);
-	destroy_session(sessionB);
+		destroy_session(sessionA);
+		destroy_session(sessionB);
+	}
 }
 
 #ifdef __ANDROID__
@@ -116,10 +117,10 @@ extern void SDL_Android_Init(JNIEnv* env, jclass cls);
 void Java_org_libsdl_app_SDLActivity_nativeInit(JNIEnv* env, jclass cls, jstring parm) {
 	/* This interface could expand with ABI negotiation, calbacks, etc. */
 	SDL_Android_Init(env, cls);
-	LOGI("Java_com_jorhy_player_PlayerActivity_nativeInit SDL_Android_Init success");
+	LOGI("Java_org_libsdl_app_SDLActivity_nativeInit SDL_Android_Init success");
 
 	SDL_SetMainReady();
-	LOGI("Java_com_jorhy_player_PlayerActivity_nativeInit SDL_SetMainReady success");
+	LOGI("Java_org_libsdl_app_SDLActivity_nativeInit SDL_SetMainReady success");
 
 	/* Run the application code! */
 	int status;
@@ -127,13 +128,13 @@ void Java_org_libsdl_app_SDLActivity_nativeInit(JNIEnv* env, jclass cls, jstring
 	argv[0] = SDL_strdup("SDL_app");
 
 	const char *argvStr = (*env)->GetStringUTFChars(env, parm, 0);
-	LOGI("Java_com_jorhy_player_PlayerActivity_nativeInit argvStr = %s", argvStr);
+	LOGI("Java_org_libsdl_app_SDLActivity_nativeInit argvStr = %s", argvStr);
 	// use your string
 	int argc = 1;
 	const char *sep = ",";
 	char *p = strtok((char *)argvStr, sep);
 	while (p) {
-		LOGI("Java_com_jorhy_player_PlayerActivity_nativeInit param%d = %s", argc, p);
+		LOGI("Java_org_libsdl_app_SDLActivity_nativeInit param%d = %s", argc, p);
 		argv[argc] = (char *)malloc(strlen(p) + 1);
 		memset(argv[argc], 0, strlen(p) + 1);
 		memcpy(argv[argc], p, strlen(p));
@@ -148,24 +149,29 @@ void Java_org_libsdl_app_SDLActivity_nativeInit(JNIEnv* env, jclass cls, jstring
 	/* exit(status); */
 }
 
-void Java_org_libsdl_app_SDLActivity_startPlay(JNIEnv* env, jclass cls) {
-	if (isPaused) {
+void Java_org_libsdl_app_SDLActivity_nativeStartPlay(JNIEnv* env, jclass cls) {
+	LOGI("Java_org_libsdl_app_SDLActivity_startPlay \n");
+	if (isRunning && isPaused) {
 		isPaused = 0;
 		start_play();
-		LOGI("Java_org_libsdl_app_SDLActivity_startPlay \n");
 	}
 }
 
-void Java_org_libsdl_app_SDLActivity_stopPlay(JNIEnv* env, jclass cls) {
-	if (!isPaused) {
+void Java_org_libsdl_app_SDLActivity_nativeStopPlay(JNIEnv* env, jclass cls) {
+	LOGI("Java_org_libsdl_app_SDLActivity_stopPlay \n");
+	if (isRunning && !isPaused) {
+		isPaused = 1;
+		stop_play();
+	}
+}
+
+void Java_org_libsdl_app_SDLActivity_nativeExitPlay(JNIEnv* env, jclass cls) {
+	LOGI("Java_org_libsdl_app_SDLActivity_exitPlay \n");
+	if (isRunning && !isPaused) {
 		isPaused = 1;
 		stop_play();
 		LOGI("Java_org_libsdl_app_SDLActivity_stopPlay \n");
 	}
-}
-
-void Java_org_libsdl_app_SDLActivity_exitPlay(JNIEnv* env, jclass cls) {
-	LOGI("Java_org_libsdl_app_SDLActivity_exitPlay \n");
 	isRunning = 0;
 }
 #endif
