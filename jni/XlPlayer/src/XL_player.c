@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
 	isRunning = 1;
 	while (isRunning) {
 		if (SDL_PollEvent(&e))  {
-			if (e.type == SDL_QUIT  || e.type == SDL_FINGERDOWN) {
+			if (e.type == SDL_QUIT/*  || e.type == SDL_FINGERDOWN*/) {
 				isRunning = 0;
 				break;
 			}
