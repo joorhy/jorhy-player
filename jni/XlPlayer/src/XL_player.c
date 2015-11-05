@@ -10,7 +10,7 @@
 #undef main
 #endif 
 
-static Scheduler *schd;
+static Scheduler *schd = NULL;
 static RtspSession *sessionA;
 static RtspSession *sessionB;
 static char serverAddr[32];
@@ -25,10 +25,9 @@ extern void stop_play();
 
 static int isPaused = 1;
 static int isRunning = 0;
+static int videoMode = modeA;
 int main(int argc, char *argv[]) {
 	SDL_Event e;
-	schd = create_scheduler(NULL, modeB);
-
 	if (argc < 5) {
 		LOGI("Param error \n");
 		return 1;
@@ -45,6 +44,7 @@ int main(int argc, char *argv[]) {
 		memset (vehB, 0, sizeof(vehB));
 		memcpy (vehB, argv[5], strlen(argv[5]));
 		channelB = atoi(argv[6]);
+		videoMode = modeB;
 	}
 
 	isRunning = 1;
@@ -75,34 +75,38 @@ int main(int argc, char *argv[]) {
 		scheduler_process(schd);
 	}
 
-	destroy_scheduler(schd);
-
 	return 0;
 }
 
 void start_play() {
 	if (isRunning) {
+		schd = create_scheduler(NULL, videoMode);
+
 		sessionA = create_session(serverAddr, serverPort, vehA, channelA, 0);
 		add_session(schd, sessionA);
-
-		sessionB = create_session(serverAddr, serverPort, vehB, channelB, 1);
-		add_session(schd, sessionB);
-
 		session_start(sessionA);
-		session_start(sessionB);
+
+		if (videoMode == modeB) {
+			sessionB = create_session(serverAddr, serverPort, vehB, channelB, 1);
+			add_session(schd, sessionB);
+			session_start(sessionB);
+		}
 	}
 }
 
 void stop_play() {
 	if (isRunning) {
 		session_stop(sessionA);
-		session_stop(sessionB);
-
 		del_session(schd, sessionA);
-		del_session(schd, sessionB);
-
 		destroy_session(sessionA);
-		destroy_session(sessionB);
+		
+		if (videoMode == modeB) {
+			del_session(schd, sessionB); 
+			session_stop(sessionB); 
+			destroy_session(sessionB);
+		}
+
+		destroy_scheduler(schd);
 	}
 }
 

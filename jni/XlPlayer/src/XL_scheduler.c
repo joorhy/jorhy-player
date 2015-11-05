@@ -53,15 +53,21 @@ Scheduler *create_scheduler(void *native_windows, int mode) {
 }
 
 void destroy_scheduler(Scheduler *schd) {
-	destroy_surface(schd->surface);
-	SDL_DestroyMutex(schd->lock);
-	free(schd);
+	if (schd != NULL) {
+		destroy_surface(schd->surface);
+		SDL_DestroyMutex(schd->lock);
+		free(schd);	
+	}
 
 	/* Quit SDL */
 	SDL_Quit();
 }
 
 void scheduler_process(Scheduler *schd) {
+	if (schd == NULL) {
+		return;
+	}
+
 	RtspSession *session = NULL;
 	if (schd->list) {
 		sock_fd_set(schd);

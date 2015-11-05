@@ -7,11 +7,11 @@ JoSurface *create_surface(void *native_windows, int mode) {
 	JoSurface *surface = (JoSurface *)malloc(sizeof(JoSurface));
 	memset(surface, 0, sizeof(JoSurface));
 
-	#ifndef __ANDROID__
+#ifndef __ANDROID__
 	SDL_CreateWindowAndRenderer(352, 576, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN, &surface->screen, &surface->render);
 #else
 	if (native_windows == NULL) {
-		surface->screen = SDL_CreateWindow("aaaa", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 480, 762, SDL_WINDOW_OPENGL);
+		surface->screen = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 480, 762, SDL_WINDOW_OPENGL);
 	} else {
 		surface->screen = SDL_CreateWindowFrom(native_windows);
 	}
