@@ -28,6 +28,7 @@ static int isRunning = 0;
 static int videoMode = modeA;
 int main(int argc, char *argv[]) {
 	SDL_Event e;
+	int x, y;
 	if (argc < 5) {
 		LOGI("Param error \n");
 		return 1;
@@ -47,15 +48,25 @@ int main(int argc, char *argv[]) {
 		videoMode = modeB;
 	}
 
+	schd = create_scheduler(NULL);
 	isRunning = 1;
 	while (isRunning) {
 		if (SDL_PollEvent(&e))  {
-			if (e.type == SDL_QUIT/*  || e.type == SDL_FINGERDOWN*/) {
+			if (e.type == SDL_QUIT) {
 				isRunning = 0;
 				break;
 			}
-
-#ifdef WIN32
+#ifdef __ANDROID__
+			if (e.type == SDL_FINGERDOWN) {
+				SDL_Touch *t = SDL_GetTouch(e.tfinger.touchId);
+				int x = t.tfinger.x / t->xres,
+					y = t.tfinger.y / t->yres;
+			}
+#else
+			if (e.type == SDL_MOUSEBUTTONDOWN) {
+				x = e.button.x;
+				y = e.button.y;
+			}
 			if (isPaused) {
 				if(e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_SPACE) {
 
@@ -70,26 +81,27 @@ int main(int argc, char *argv[]) {
 					LOGI("Pause \n");
 				}
 			}
+
 #endif
 		}
-		scheduler_process(schd);
+		//scheduler_process(schd);
 	}
+	destroy_scheduler(schd);
 
 	return 0;
 }
 
 void start_play() {
 	if (isRunning) {
-		schd = create_scheduler(NULL, videoMode);
-
+		set_surface_mode(schd->surface, videoMode);
 		sessionA = create_session(serverAddr, serverPort, vehA, channelA, 0);
 		add_session(schd, sessionA);
-		session_start(sessionA);
+		//session_start(sessionA);
 
 		if (videoMode == modeB) {
 			sessionB = create_session(serverAddr, serverPort, vehB, channelB, 1);
 			add_session(schd, sessionB);
-			session_start(sessionB);
+			//session_start(sessionB);
 		}
 	}
 }
@@ -105,8 +117,6 @@ void stop_play() {
 			session_stop(sessionB); 
 			destroy_session(sessionB);
 		}
-
-		destroy_scheduler(schd);
 	}
 }
 

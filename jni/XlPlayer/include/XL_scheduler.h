@@ -20,7 +20,7 @@ typedef struct Scheduler {
 extern "C" {
 #endif
 
-extern Scheduler *create_scheduler(void *native_windows, int mode);
+extern Scheduler *create_scheduler(void *native_windows);
 extern void scheduler_process(Scheduler *schd);
 extern void destroy_scheduler(Scheduler *schd);
 

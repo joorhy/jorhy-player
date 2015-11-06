@@ -34,7 +34,7 @@ int sock_select(Scheduler *schd) {
 	return is_set_num;
 }
 
-Scheduler *create_scheduler(void *native_windows, int mode) {
+Scheduler *create_scheduler(void *native_windows) {
 	Scheduler *schd = (Scheduler *)malloc(sizeof(Scheduler));
 	memset(schd, 0, sizeof(Scheduler));
 
@@ -46,7 +46,7 @@ Scheduler *create_scheduler(void *native_windows, int mode) {
 	}
 	LOGI("initialize_scheduler success");
 	
-	schd->surface = create_surface(native_windows, mode);
+	schd->surface = create_surface(native_windows);
 	schd->lock = SDL_CreateMutex();
 
 	return schd;
