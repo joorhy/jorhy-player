@@ -26,6 +26,7 @@ extern void stop_play();
 static int isPaused = 1;
 static int isRunning = 0;
 static int videoMode = modeA;
+
 int main(int argc, char *argv[]) {
 	SDL_Event e;
 	int x, y;
@@ -34,6 +35,7 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
+	videoMode = modeA;
 	memset(serverAddr, 0, sizeof(serverAddr));
 	memcpy(serverAddr, argv[1], strlen(argv[1]));
 	serverPort = atoi(argv[2]);
@@ -53,15 +55,16 @@ int main(int argc, char *argv[]) {
 	while (isRunning) {
 		if (SDL_PollEvent(&e))  {
 			if (e.type == SDL_QUIT) {
+				stop_play();
 				isRunning = 0;
 				break;
 			}
 #ifdef __ANDROID__
-			if (e.type == SDL_FINGERDOWN) {
+			/*if (e.type == SDL_FINGERDOWN) {
 				SDL_Touch *t = SDL_GetTouch(e.tfinger.touchId);
-				int x = t.tfinger.x / t->xres,
-					y = t.tfinger.y / t->yres;
-			}
+				x = t.tfinger.x / t->xres,
+				y = t.tfinger.y / t->yres;
+			}*/
 #else
 			if (e.type == SDL_MOUSEBUTTONDOWN) {
 				x = e.button.x;
@@ -79,12 +82,12 @@ int main(int argc, char *argv[]) {
 					isPaused = 1;
 					stop_play();
 					LOGI("Pause \n");
+					break;
 				}
 			}
-
 #endif
 		}
-		//scheduler_process(schd);
+		scheduler_process(schd);
 	}
 	destroy_scheduler(schd);
 
@@ -96,26 +99,32 @@ void start_play() {
 		set_surface_mode(schd->surface, videoMode);
 		sessionA = create_session(serverAddr, serverPort, vehA, channelA, 0);
 		add_session(schd, sessionA);
-		//session_start(sessionA);
+		session_start(sessionA);
 
 		if (videoMode == modeB) {
 			sessionB = create_session(serverAddr, serverPort, vehB, channelB, 1);
 			add_session(schd, sessionB);
-			//session_start(sessionB);
+			session_start(sessionB);
 		}
 	}
 }
 
 void stop_play() {
 	if (isRunning) {
-		session_stop(sessionA);
-		del_session(schd, sessionA);
-		destroy_session(sessionA);
+		if (sessionA != NULL) {
+			session_stop(sessionA);
+			del_session(schd, sessionA);
+			destroy_session(sessionA);
+			sessionA = NULL;
+		}
 		
 		if (videoMode == modeB) {
-			del_session(schd, sessionB); 
-			session_stop(sessionB); 
-			destroy_session(sessionB);
+			if (sessionB != NULL) {
+				del_session(schd, sessionB); 
+				session_stop(sessionB); 
+				destroy_session(sessionB);
+				sessionB = NULL;
+			}
 		}
 	}
 }

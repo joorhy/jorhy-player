@@ -64,11 +64,11 @@ void destroy_scheduler(Scheduler *schd) {
 }
 
 void scheduler_process(Scheduler *schd) {
+	RtspSession *session = NULL;
 	if (schd == NULL) {
 		return;
 	}
 
-	RtspSession *session = NULL;
 	if (schd->list) {
 		sock_fd_set(schd);
 		if (sock_select(schd) > 0) {
@@ -108,7 +108,7 @@ void del_session(Scheduler *schd, RtspSession *session) {
 	SDL_LockMutex(schd->lock);
 	tmp = schd->list;
 
-	if (tmp == session) {
+	if (tmp != NULL && tmp == session) {
 		schd->list = tmp->next;
 		SDL_UnlockMutex(schd->lock);
 		return;
