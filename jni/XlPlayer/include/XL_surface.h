@@ -9,12 +9,22 @@ enum SurfaceMode {
 	modeC = 4,		/* 2x2 */
 };
 
+enum ScreenMode {
+	screenModeNone = 0,
+	screenModeA,
+	screenModeB,
+	screenModeC
+};
+
 typedef struct JoSurface {
 	SDL_Window * screen;
 	SDL_Renderer* render;
 	SDL_Texture* texture[4];
 	/*max video screen max 4*/
 	SDL_Rect video[4];
+	/*for full screen*/
+	int screen_mode;
+	SDL_Rect full_screen;
 } JoSurface;
 /* Set up for C function definitions, even when using C++ */
 #ifdef __cplusplus
@@ -23,6 +33,7 @@ extern "C" {
 
 extern JoSurface *create_surface(void *native_windows);
 extern void set_surface_mode(JoSurface *surface, int mode);
+extern void set_full_mode(JoSurface *surface, float x, float y);
 extern void render_frame(JoSurface *surface, H264Decoder *decoder, int index);
 extern void destroy_surface(JoSurface *surface);
 

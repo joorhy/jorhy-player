@@ -8,9 +8,9 @@ JoSurface *create_surface(void *native_windows) {
 	memset(surface, 0, sizeof(JoSurface));
 
 #ifdef __ANDROID__
-	SDL_CreateWindowAndRenderer(480, 762, SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN, &surface->screen, &surface->render);
+	SDL_CreateWindowAndRenderer(0, 0, SDL_WINDOW_OPENGL, &surface->screen, &surface->render);
 	//if (native_windows == NULL) {
-	//	surface->screen = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 480, 762, SDL_WINDOW_OPENGL);
+	//	surface->screen = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 480, 762, SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN);
 	//} else {
 	//	surface->screen = SDL_CreateWindowFrom(native_windows);
 	//}
@@ -30,7 +30,8 @@ JoSurface *create_surface(void *native_windows) {
 	for (i = 0; i < 4; i++) {
 		surface->texture[i] = SDL_CreateTexture(surface->render, SDL_PIXELFORMAT_IYUV, SDL_TEXTUREACCESS_STREAMING, w, h);
 	}
-	
+	surface->screen_mode = screenModeNone;
+
 	return surface;
 }
 
@@ -43,6 +44,9 @@ void set_surface_mode(JoSurface *surface, int mode) {
 	//SDL_FillRect(WindowScreen, NULL, SDL_MapRGB(WindowScreen->format, 255, 255, 255));
 	//SDL_SetRenderDrawColor(surface->render, 96, 96, 96, 0);
 	//SDL_RenderSetScale(surface->render, 1, 1);
+	surface->full_screen.x = 0; surface->full_screen.y = 0;
+	surface->full_screen.w = w; surface->full_screen.h = h;
+
 	switch (mode) {
 	case modeA:
 		surface->video[0].x = 0; surface->video[0].y = 0;
@@ -82,9 +86,23 @@ void set_surface_mode(JoSurface *surface, int mode) {
 	//SDL_FreeSurface(WindowScreen);
 }
 
+void set_full_mode(JoSurface *surface, float x, float y) {
+	if (surface->screen_mode == screenModeNone) {
+		if (y > 0 && y < 0.5) {
+			surface->screen_mode = screenModeA;
+		}
+		else if (y > 0.5 && y < 1) {
+			surface->screen_mode = screenModeB;
+		}
+	} else {
+		surface->screen_mode = screenModeNone;
+	}
+}
+
 void render_frame(JoSurface *surface, H264Decoder *decoder, int index) {
 	static int videoA = 0;
 	static int videoB = 0;
+
 #ifdef USE_FFMPEG
 	SDL_UpdateYUVTexture(surface->texture, &decoder->rect, (const Uint8 *)decoder->picture->data[0], decoder->picture->linesize[0],
 		(const Uint8 *)decoder->picture->data[1], decoder->picture->linesize[1], (const Uint8 *)decoder->picture->data[2], decoder->picture->linesize[2]);
@@ -99,11 +117,15 @@ void render_frame(JoSurface *surface, H264Decoder *decoder, int index) {
 #endif
 	SDL_RenderClear(surface->render);
 	LOGI("x = %d, y = %d, w = %d, h = %d", surface->video[index].x, surface->video[index].y, surface->video[index].w, surface->video[index].h);
-	if (videoA == 1) {
-		SDL_RenderCopy(surface->render, surface->texture[0], &decoder->rect, &surface->video[0]);
-	}
-	if (videoB == 1) {
-		SDL_RenderCopy(surface->render, surface->texture[1], &decoder->rect, &surface->video[1]);
+	if (surface->screen_mode == screenModeNone) {
+		if (videoA == 1 && videoB == 1) {
+			SDL_RenderCopy(surface->render, surface->texture[0], &decoder->rect, &surface->video[0]);
+			SDL_RenderCopy(surface->render, surface->texture[1], &decoder->rect, &surface->video[1]);
+		}
+	} else if (surface->screen_mode == screenModeA) {
+		SDL_RenderCopy(surface->render, surface->texture[0], &decoder->rect, &surface->full_screen);
+	} else if (surface->screen_mode == screenModeB) {
+		SDL_RenderCopy(surface->render, surface->texture[1], &decoder->rect, &surface->full_screen);
 	}
 	SDL_RenderPresent(surface->render);
 }

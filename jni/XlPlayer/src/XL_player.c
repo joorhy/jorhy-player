@@ -20,9 +20,6 @@ static char vehB[256];
 static int channelA;
 static int channelB;
 
-extern void start_play();
-extern void stop_play();
-
 static int isPaused = 1;
 static int isRunning = 0;
 static int videoMode = modeA;
@@ -66,10 +63,6 @@ int main(int argc, char *argv[]) {
 				y = t.tfinger.y / t->yres;
 			}*/
 #else
-			if (e.type == SDL_MOUSEBUTTONDOWN) {
-				x = e.button.x;
-				y = e.button.y;
-			}
 			if (isPaused) {
 				if(e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_SPACE) {
 
@@ -78,11 +71,15 @@ int main(int argc, char *argv[]) {
 					LOGI("Resume \n");
 				}
 			} else {
-				if(e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_SPACE) {
-					isPaused = 1;
-					stop_play();
-					LOGI("Pause \n");
-					break;
+				if(e.type == SDL_KEYDOWN) {
+					if (e.key.keysym.sym == SDLK_SPACE) {
+						isPaused = 1;
+						stop_play();
+						LOGI("Pause \n");
+						break;
+					} else if (e.key.keysym.sym == SDLK_F1) {
+						changeScreen((float)0.5, (float)0.6);
+					}
 				}
 			}
 #endif
@@ -126,6 +123,12 @@ void stop_play() {
 				sessionB = NULL;
 			}
 		}
+	}
+}
+
+void changeScreen(float x, float y) {
+	if (videoMode == modeB) {
+		set_full_mode(schd->surface, x, y);
 	}
 }
 
@@ -196,5 +199,13 @@ void Java_org_libsdl_app_SDLActivity_nativeExitPlay(JNIEnv* env, jclass cls) {
 		LOGI("Java_org_libsdl_app_SDLActivity_stopPlay \n");
 	}
 	isRunning = 0;
+}
+
+void Java_org_libsdl_app_SDLActivity_nativeDoubleClick(JNIEnv* env, jclass cls,  jfloat x,  jfloat y) {
+	LOGI("Java_org_libsdl_app_SDLActivity_nativeDoubleClick \n");
+	if (isRunning && !isPaused) {
+		changeScreen(x, y);
+		LOGI("changeScreen \n");
+	}
 }
 #endif
