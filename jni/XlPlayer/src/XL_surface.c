@@ -8,14 +8,13 @@ JoSurface *create_surface(void *native_windows) {
 	memset(surface, 0, sizeof(JoSurface));
 
 #ifdef __ANDROID__
-	SDL_CreateWindowAndRenderer(0, 0, SDL_WINDOW_OPENGL, &surface->screen, &surface->render);
-	//if (native_windows == NULL) {
-	//	surface->screen = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 480, 762, SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN);
-	//} else {
-	//	surface->screen = SDL_CreateWindowFrom(native_windows);
-	//}
-
-	//surface->render = SDL_CreateRenderer(surface->screen, -1, 0);
+	if (native_windows == NULL) {
+		SDL_CreateWindowAndRenderer(0, 0, SDL_WINDOW_OPENGL | SDL_WINDOW_FOREIGN, &surface->screen, &surface->render);
+	} else {
+		surface->screen = SDL_CreateWindowFrom(native_windows);
+		surface->render = SDL_CreateRenderer(surface->screen, -1, 0);
+	}
+	
 #else
 	if (native_windows == NULL) {
 		surface->screen = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 352, 576, SDL_WINDOW_OPENGL);
