@@ -40,27 +40,29 @@ void set_surface_mode(JoSurface *surface, int mode) {
 	SDL_GetWindowSize(surface->screen, &w, &h);
 	
 	//WindowScreen = SDL_GetWindowSurface(surface->screen);
-	//SDL_FillRect(WindowScreen, NULL, SDL_MapRGB(WindowScreen->format, 255, 255, 255));
-	//SDL_SetRenderDrawColor(surface->render, 96, 96, 96, 0);
+	//SDL_FillRect(WindowScreen, NULL, SDL_MapRGB(WindowScreen->format, 96, 96, 96));
+	SDL_SetRenderDrawColor(surface->render, 96, 96, 96, 255);
 	//SDL_RenderSetScale(surface->render, 1, 1);
 	surface->full_screen.x = 0; surface->full_screen.y = 0;
 	surface->full_screen.w = w; surface->full_screen.h = h;
-
 	switch (mode) {
 	case modeA:
 		surface->video[0].x = 0; surface->video[0].y = 0;
 		surface->video[0].w = w; surface->video[0].h = h;
-		//SDL_RenderDrawRect(surface->render, &surface->video[0]);
+		SDLTest_DrawString(surface->render, surface->video[0].w / 2 - 40, surface->video[0].h / 2, "loading...");
+		SDL_RenderDrawRect(surface->render, &surface->video[0]);
 		break;
 	case modeB:
 		/*for first window*/
 		surface->video[0].x = 0; surface->video[0].y = 0;
 		surface->video[0].w = w; surface->video[0].h = h / 2;
-		//SDL_RenderDrawRect(surface->render, &surface->video[0]);
+		SDLTest_DrawString(surface->render, surface->video[0].w / 2 - 40, surface->video[0].h / 2, "loading...");
+		SDL_RenderDrawRect(surface->render, &surface->video[0]);
 		/*for second window*/
 		surface->video[1].x = 0; surface->video[1].y = h / 2;
 		surface->video[1].w = w; surface->video[1].h = h / 2;
-		//SDL_RenderDrawRect(surface->render, &surface->video[1]);
+		SDLTest_DrawString(surface->render, surface->video[0].w / 2 - 40, surface->video[0].h / 2 * 3, "loading...");
+		SDL_RenderDrawRect(surface->render, &surface->video[1]);
 		break;
 	case modeC:
 		/*for left up window*/
@@ -81,7 +83,7 @@ void set_surface_mode(JoSurface *surface, int mode) {
 		//SDL_RenderDrawRect(surface->render, &surface->video[3]);
 		break;
 	}
-	//SDL_UpdateWindowSurface(surface->screen);
+	SDL_UpdateWindowSurface(surface->screen);
 	//SDL_FreeSurface(WindowScreen);
 }
 
@@ -95,6 +97,16 @@ void set_full_mode(JoSurface *surface, float x, float y) {
 		}
 	} else {
 		surface->screen_mode = screenModeNone;
+	}
+}
+
+void screen_capture(const char *file_name, JoSurface *surface, H264Decoder *decoderA, H264Decoder *decoderB) {
+	if (surface->screen_mode == screenModeNone) {
+		save_png(file_name, decoderA, decoderB);
+	} else if (surface->screen_mode == screenModeA) {
+		save_png(file_name, decoderA, NULL);
+	} else if (surface->screen_mode == screenModeB) {
+		save_png(file_name, NULL, decoderB);
 	}
 }
 
@@ -117,8 +129,10 @@ void render_frame(JoSurface *surface, H264Decoder *decoder, int index) {
 	SDL_RenderClear(surface->render);
 	LOGI("x = %d, y = %d, w = %d, h = %d", surface->video[index].x, surface->video[index].y, surface->video[index].w, surface->video[index].h);
 	if (surface->screen_mode == screenModeNone) {
-		if (videoA == 1 && videoB == 1) {
+		if (videoA == 1) {
 			SDL_RenderCopy(surface->render, surface->texture[0], &decoder->rect, &surface->video[0]);
+		}
+		if (videoB == 1) {
 			SDL_RenderCopy(surface->render, surface->texture[1], &decoder->rect, &surface->video[1]);
 		}
 	} else if (surface->screen_mode == screenModeA) {

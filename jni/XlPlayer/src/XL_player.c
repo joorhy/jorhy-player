@@ -11,8 +11,8 @@
 #endif 
 
 static Scheduler *schd = NULL;
-static RtspSession *sessionA;
-static RtspSession *sessionB;
+static RtspSession *sessionA = NULL;
+static RtspSession *sessionB = NULL;
 static char serverAddr[32];
 static int serverPort;
 static char vehA[256];
@@ -132,6 +132,10 @@ void changeScreen(float x, float y) {
 	}
 }
 
+void snapshot(const char *file_name) {
+	screen_capture(file_name, schd->surface, sessionA, sessionB);
+}
+
 #ifdef __ANDROID__
 /* Include the SDL main definition header */
 #include <jni.h>
@@ -206,6 +210,14 @@ void Java_org_libsdl_app_SDLActivity_nativeDoubleClick(JNIEnv* env, jclass cls, 
 	if (isRunning && !isPaused) {
 		changeScreen(x, y);
 		LOGI("changeScreen \n");
+	}
+}
+
+void Java_org_libsdl_app_SDLActivity_nativeSnapshot(JNIEnv* env, jclass cls, jstring parm) {
+	LOGI("Java_org_libsdl_app_SDLActivity_nativeSnapshot \n");
+	if (isRunning && !isPaused) {
+		snapshot((*env)->GetStringUTFChars(env, parm, 0));
+		LOGI("snapshot \n");
 	}
 }
 #endif

@@ -1,5 +1,6 @@
-#include "XL_log.h"
+Ôªø#include "XL_log.h"
 #include "XL_decoder.h"
+#include "png.h"
 
 #ifdef WIN32
 
@@ -14,9 +15,63 @@
 
 #define MAX_YUV_SIZE (1024 * 1024 * 2)
 
-static bool YV12_to_RGB24(unsigned char* pYV12, unsigned char* pRGB24, int iWidth, int iHeight) {  
+static int write_png(const char *filename, const char *data, int width, int height) {
+	png_FILE_p fp = NULL;
+	png_structp write_ptr = NULL;
+	png_infop info_ptr = NULL;
+	png_bytep *row_pointers = NULL;
+	png_colorp palette = NULL;
+	int i;
+
+	fp = fopen(filename, "wb");
+	if (!fp)
+	{
+		LOGE("Could not open File %s\n", filename);
+		return -1;
+	}
+
+	write_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+	if (!write_ptr)
+	{
+		fclose(fp);
+		return -1;
+	}
+
+	info_ptr = png_create_info_struct(write_ptr);
+	if (info_ptr == NULL)
+	{
+		fclose(fp);
+		return -1;
+	}
+	if (setjmp(png_jmpbuf(write_ptr)))
+	{
+		fclose(fp);
+		return -1;
+	}
+	png_init_io(write_ptr, fp);
+
+	png_set_IHDR(write_ptr, info_ptr, width, height, 8,			//8bit
+		PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
+		PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+	palette = (png_colorp)png_malloc(write_ptr, PNG_MAX_PALETTE_LENGTH * png_sizeof(png_color));
+	png_set_PLTE(write_ptr, info_ptr, palette, PNG_MAX_PALETTE_LENGTH);
+
+	png_write_info(write_ptr, info_ptr);
+
+	png_set_packing(write_ptr);
+	row_pointers = (png_bytep *)malloc(height * sizeof(png_bytep));
+	for (i = 0; i<height; i++)
+		row_pointers[i] = data + width*i;
+	png_write_image(write_ptr, row_pointers);
+	png_free(write_ptr, palette);
+	free(row_pointers);
+	fclose(fp);
+}
+
+static bool YV12_to_RGB24(const char *file_name, unsigned char* pYV12, int iWidth, int iHeight) {  
 	const long nYLen = (long)(iHeight * iWidth);  
 	const int nHfWidth = (iWidth >> 1); 
+	unsigned char* pRGB24 = malloc(1024 * 1024);
 
 	int rgb[3];  
 	int i, j, m, n, x, y;  
@@ -45,9 +100,9 @@ static bool YV12_to_RGB24(unsigned char* pYV12, unsigned char* pRGB24, int iWidt
 		for(x=0; x < iWidth; x++) {  
 			i = m + x;  
 			j = n + (x>>1);  
-			rgb[2] = (int)(yData[i] + 1.370705 * (vData[j] - 128)); // r∑÷¡ø÷µ  
-			rgb[1] = (int)(yData[i] - 0.698001 * (uData[j] - 128)  - 0.703125 * (vData[j] - 128)); // g∑÷¡ø÷µ  
-			rgb[0] = (int)(yData[i] + 1.732446 * (uData[j] - 128)); // b∑÷¡ø÷µ  
+			rgb[2] = (int)(yData[i] + 1.370705 * (vData[j] - 128)); // rÂàÜÈáèÂÄº  
+			rgb[1] = (int)(yData[i] - 0.698001 * (uData[j] - 128)  - 0.703125 * (vData[j] - 128)); // gÂàÜÈáèÂÄº  
+			rgb[0] = (int)(yData[i] + 1.732446 * (uData[j] - 128)); // bÂàÜÈáèÂÄº  
 			j = nYLen - iWidth - m + x;  
 			i = (j<<1) + j;  
 			for(j=0; j<3; j++) {  
@@ -58,88 +113,118 @@ static bool YV12_to_RGB24(unsigned char* pYV12, unsigned char* pRGB24, int iWidt
 			}  
 		}  
 	}  
+	write_png(file_name, pRGB24, iWidth, iHeight);
+	free(pRGB24);
 
 	return 1;  
 }  
 
-int copy_data(H264Decoder *decoder) {
+int save_png(const char *file_name, H264Decoder *decoderA, H264Decoder *decoderB) {
+	H264Decoder *decoder;
 	int len = 0;
 	uint8_t *yuv_data = NULL;
-	uint8_t *out_yuv = (uint8_t *)decoder->yuv;
+	uint8_t *out_yuv = (uint8_t *)malloc(1024 * 1024);
 	int height = 0;
 	int width = 0;
 	int i;
+	if (decoderA == NULL && decoderB == NULL) {
+		return 0;
+	} else if (decoderA != NULL && decoderB != NULL) {
+		width = decoderA->rect.w;
+		height = decoderA->rect.h;
 
-#ifdef USE_FFMPEG
-	yuv_data = decoder->picture->data[0];
-	if (yuv_data == NULL)
-		return len;
+		yuv_data = decoderA->data[0];
+		if (yuv_data == NULL)
+			return len;
 
-	width = decoder->rect.w;
-	height = decoder->rect.h;
+		for (i = 0; i < height; i++) {
+			memcpy(out_yuv, yuv_data, width);
+			len += width;
+			yuv_data += decoderA->bufInfo.UsrData.sSystemBuffer.iStride[0];
+			out_yuv += width;
+		}
+		yuv_data = decoderB->data[0];
+		if (yuv_data == NULL)
+			return len;
 
-	for (i = 0; i < height; i++) {
-		memcpy(out_yuv, yuv_data, width);
-		len += width;
-		yuv_data += decoder->picture->linesize[0];
-		out_yuv += width;
+		for (i = 0; i < height; i++) {
+			memcpy(out_yuv, yuv_data, width);
+			len += width;
+			yuv_data += decoderB->bufInfo.UsrData.sSystemBuffer.iStride[0];
+			out_yuv += width;
+		}
+
+		width = decoderA->rect.w / 2;
+		height = decoderA->rect.h / 2;
+
+		yuv_data = decoderA->data[1];
+		for (i = 0; i < height; i++) {
+			memcpy(out_yuv, yuv_data, width);
+			len += width;
+			yuv_data += decoderA->bufInfo.UsrData.sSystemBuffer.iStride[1];
+			out_yuv += width;
+		}
+		yuv_data = decoderB->data[1];
+		for (i = 0; i < height; i++) {
+			memcpy(out_yuv, yuv_data, width);
+			len += width;
+			yuv_data += decoderB->bufInfo.UsrData.sSystemBuffer.iStride[1];
+			out_yuv += width;
+		}
+
+		yuv_data = decoderA->data[2];
+		for (i = 0; i < height; i++) {
+			memcpy(out_yuv, yuv_data, width);
+			len += width;
+			yuv_data += decoderA->bufInfo.UsrData.sSystemBuffer.iStride[2];
+			out_yuv += width;
+		}
+		yuv_data = decoderB->data[2];
+		for (i = 0; i < height; i++) {
+			memcpy(out_yuv, yuv_data, width);
+			len += width;
+			yuv_data += decoderB->bufInfo.UsrData.sSystemBuffer.iStride[2];
+			out_yuv += width;
+		}
+
+		YV12_to_RGB24(file_name, out_yuv, decoderA->rect.w, decoderA->rect.h * 2);
+	} else {
+		decoder = decoderA != NULL ? decoderA : decoderB;
+		width = decoder->rect.w;
+		height = decoder->rect.h;
+
+		yuv_data = decoder->data[0];
+		if (yuv_data == NULL)
+			return len;
+
+		for (i = 0; i < height; i++) {
+			memcpy(out_yuv, yuv_data, width);
+			len += width;
+			yuv_data += decoder->bufInfo.UsrData.sSystemBuffer.iStride[0];
+			out_yuv += width;
+		}
+
+		width = decoder->rect.w / 2;
+		height = decoder->rect.h / 2;
+
+		yuv_data = decoder->data[1];
+		for (i = 0; i < height; i++) {
+			memcpy(out_yuv, yuv_data, width);
+			len += width;
+			yuv_data += decoder->bufInfo.UsrData.sSystemBuffer.iStride[1];
+			out_yuv += width;
+		}
+
+		yuv_data = decoder->data[2];
+		for (i = 0; i < height; i++) {
+			memcpy(out_yuv, yuv_data, width);
+			len += width;
+			yuv_data += decoder->bufInfo.UsrData.sSystemBuffer.iStride[2];
+			out_yuv += width;
+		}
+		YV12_to_RGB24(file_name, out_yuv, decoderA->rect.w, decoderA->rect.h);
 	}
-
-	yuv_data = decoder->picture->data[1];
-	width = decoder->rect.w / 2;
-	height = decoder->rect.h / 2;
-	for (i = 0; i < height; i++) {
-		memcpy(out_yuv, yuv_data, width);
-		len += width;
-		yuv_data += decoder->picture->linesize[1];
-		out_yuv += width;
-	}
-
-	yuv_data = decoder->picture->data[2];
-	width = decoder->rect.w / 2;
-	height = decoder->rect.h / 2;
-	for (i = 0; i < height; i++) {
-		memcpy(out_yuv, yuv_data, width);
-		len += width;
-		yuv_data += decoder->picture->linesize[2];
-		out_yuv += width;
-	}
-#else
-	yuv_data = decoder->data[0];
-	if (yuv_data == NULL)
-		return len;
-
-	width = decoder->rect.w;
-	height = decoder->rect.h;
-
-	for (i = 0; i < height; i++) {
-		memcpy(out_yuv, yuv_data, width);
-		len += width;
-		yuv_data += decoder->bufInfo.UsrData.sSystemBuffer.iStride[0];
-		out_yuv += width;
-	}
-
-	yuv_data = decoder->data[1];
-	width = decoder->rect.w / 2;
-	height = decoder->rect.h / 2;
-	for (i = 0; i < height; i++) {
-		memcpy(out_yuv, yuv_data, width);
-		len += width;
-		yuv_data += decoder->bufInfo.UsrData.sSystemBuffer.iStride[1];
-		out_yuv += width;
-	}
-
-	yuv_data = decoder->data[2];
-	width = decoder->rect.w / 2;
-	height = decoder->rect.h / 2;
-	for (i = 0; i < height; i++) {
-		memcpy(out_yuv, yuv_data, width);
-		len += width;
-		yuv_data += decoder->bufInfo.UsrData.sSystemBuffer.iStride[2];
-		out_yuv += width;
-	}
-#endif
-	YV12_to_RGB24((unsigned char *)decoder->yuv, (unsigned char *)decoder->rgb, decoder->rect.w, decoder->rect.h);
+	free(out_yuv);
 
 	return len;
 }
@@ -237,8 +322,6 @@ int decode_frame(H264Decoder *decoder, RtpStream *stream) {
 
 	decoder->rect.w = decoder->context->width;
 	decoder->rect.h = decoder->context->height;
-
-	//decoder->yuv_len = copy_data(decoder);
 #else
 	DECODING_STATE rv;
 	memset(&decoder->bufInfo, 0, sizeof(decoder->bufInfo));
@@ -251,8 +334,6 @@ int decode_frame(H264Decoder *decoder, RtpStream *stream) {
 		LOGI("CXPlDecodeH264::Decode success");
 		decoder->rect.w = decoder->bufInfo.UsrData.sSystemBuffer.iWidth;
 		decoder->rect.h = decoder->bufInfo.UsrData.sSystemBuffer.iHeight;
-
-		//decoder->yuv_len = copy_data(decoder);
 	}
 #endif
 

@@ -42,6 +42,7 @@ typedef struct H264Decoder {
 
 extern H264Decoder *create_decoder();
 extern void destroy_decoder(H264Decoder *decoder);
+extern int save_png(const char *file_name, H264Decoder *decoderA, H264Decoder *decoderB);
 extern int decode_frame(H264Decoder *decoder, RtpStream *stream);
 
 #ifdef __cplusplus

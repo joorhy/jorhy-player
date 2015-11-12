@@ -34,6 +34,7 @@ extern "C" {
 extern JoSurface *create_surface(void *native_windows);
 extern void set_surface_mode(JoSurface *surface, int mode);
 extern void set_full_mode(JoSurface *surface, float x, float y);
+extern void screen_capture(const char *file_name, JoSurface *surface, H264Decoder *decoderA, H264Decoder *decoderB);
 extern void render_frame(JoSurface *surface, H264Decoder *decoder, int index);
 extern void destroy_surface(JoSurface *surface);
 

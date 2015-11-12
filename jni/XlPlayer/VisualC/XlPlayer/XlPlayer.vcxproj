@@ -19,7 +19,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v110_xp</PlatformToolset>
+    <PlatformToolset>v120_xp</PlatformToolset>
     <CharacterSet>NotSet</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -52,9 +52,9 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\..\include;..\ffmpeg\include;..\SDL\include;..\OpenH264\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include;..\ffmpeg\include;..\SDL\include;..\OpenH264\include;..\..\include\libpng;..\..\include\zlib</AdditionalIncludeDirectories>
       <CallingConvention>Cdecl</CallingConvention>
     </ClCompile>
     <Link>
@@ -84,6 +84,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\libpng\png.c" />
+    <ClCompile Include="..\..\src\libpng\pngerror.c" />
+    <ClCompile Include="..\..\src\libpng\pngget.c" />
+    <ClCompile Include="..\..\src\libpng\pngmem.c" />
+    <ClCompile Include="..\..\src\libpng\pngpread.c" />
+    <ClCompile Include="..\..\src\libpng\pngrio.c" />
+    <ClCompile Include="..\..\src\libpng\pngrtran.c" />
+    <ClCompile Include="..\..\src\libpng\pngrutil.c" />
+    <ClCompile Include="..\..\src\libpng\pngset.c" />
+    <ClCompile Include="..\..\src\libpng\pngtrans.c" />
+    <ClCompile Include="..\..\src\libpng\pngwio.c" />
+    <ClCompile Include="..\..\src\libpng\pngwrite.c" />
+    <ClCompile Include="..\..\src\libpng\pngwtran.c" />
+    <ClCompile Include="..\..\src\libpng\pngwutil.c" />
+    <ClCompile Include="..\..\src\XL_font.c" />
     <ClCompile Include="..\..\src\XL_player.c" />
     <ClCompile Include="..\..\src\XL_base64.c" />
     <ClCompile Include="..\..\src\XL_decoder.c" />
@@ -92,6 +107,21 @@
     <ClCompile Include="..\..\src\XL_rtsp_session.c" />
     <ClCompile Include="..\..\src\XL_scheduler.c" />
     <ClCompile Include="..\..\src\XL_surface.c" />
+    <ClCompile Include="..\..\src\zlib\adler32.c" />
+    <ClCompile Include="..\..\src\zlib\compress.c" />
+    <ClCompile Include="..\..\src\zlib\crc32.c" />
+    <ClCompile Include="..\..\src\zlib\deflate.c" />
+    <ClCompile Include="..\..\src\zlib\gzclose.c" />
+    <ClCompile Include="..\..\src\zlib\gzlib.c" />
+    <ClCompile Include="..\..\src\zlib\gzread.c" />
+    <ClCompile Include="..\..\src\zlib\gzwrite.c" />
+    <ClCompile Include="..\..\src\zlib\infback.c" />
+    <ClCompile Include="..\..\src\zlib\inffast.c" />
+    <ClCompile Include="..\..\src\zlib\inflate.c" />
+    <ClCompile Include="..\..\src\zlib\inftrees.c" />
+    <ClCompile Include="..\..\src\zlib\trees.c" />
+    <ClCompile Include="..\..\src\zlib\uncompr.c" />
+    <ClCompile Include="..\..\src\zlib\zutil.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\XL_base64.h" />
