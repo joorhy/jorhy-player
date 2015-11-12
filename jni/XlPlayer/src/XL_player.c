@@ -79,6 +79,8 @@ int main(int argc, char *argv[]) {
 						break;
 					} else if (e.key.keysym.sym == SDLK_F1) {
 						changeScreen((float)0.5, (float)0.6);
+					} else if (e.key.keysym.sym == SDLK_F2) {
+						snapshot("test.png");
 					}
 				}
 			}
@@ -133,7 +135,7 @@ void changeScreen(float x, float y) {
 }
 
 void snapshot(const char *file_name) {
-	screen_capture(file_name, schd->surface, sessionA, sessionB);
+	screen_capture(file_name, schd->surface, sessionA->decoder, sessionB->decoder);
 }
 
 #ifdef __ANDROID__

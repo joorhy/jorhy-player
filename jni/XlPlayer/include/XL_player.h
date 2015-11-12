@@ -19,6 +19,7 @@ extern void Java_org_libsdl_app_SDLActivity_nativeDoubleClick(JNIEnv* env, jclas
 extern void start_play();
 extern void stop_play();
 extern void changeScreen(float x, float y);
+extern void snapshot(const char *file_name);
 
 /* Ends C function definitions when using C++ */
 #ifdef __cplusplus
