@@ -51,7 +51,7 @@ static int write_png(const char *filename, const char *data, int width, int heig
 	png_init_io(write_ptr, fp);
 
 	png_set_IHDR(write_ptr, info_ptr, width, height, 8,			//8bit
-		PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE,
+		PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
 		PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
 	palette = (png_colorp)png_malloc(write_ptr, PNG_MAX_PALETTE_LENGTH * png_sizeof(png_color));
 	png_set_PLTE(write_ptr, info_ptr, palette, PNG_MAX_PALETTE_LENGTH);
@@ -66,6 +66,46 @@ static int write_png(const char *filename, const char *data, int width, int heig
 	png_free(write_ptr, palette);
 	free(row_pointers);
 	fclose(fp);
+}
+
+bool YV12ToBGR24_Native(const char *file_name, unsigned char* pYUV, int width,int height)
+{
+	const long len = width * height;
+    unsigned char* yData = pYUV;
+    unsigned char* vData = &yData[len];
+    unsigned char* uData = &vData[len >> 2];
+
+    int bgr[3];
+    int yIdx,uIdx,vIdx,idx;
+	int i, j, k;
+	unsigned char* pBGR24 = (unsigned char*)malloc(1024 * 1024);
+
+    if (width < 1 || height < 1 || pYUV == NULL || pBGR24 == NULL)
+        return FALSE;
+
+    for (i = 0;i < height;i++){
+        for (j = 0;j < width;j++){
+            yIdx = i * width + j;
+            vIdx = (i/2) * (width/2) + (j/2);
+            uIdx = vIdx;
+
+            bgr[0] = (int)(yData[yIdx] + 1.732446 * (uData[vIdx] - 128));                                    // b分量
+            bgr[1] = (int)(yData[yIdx] - 0.698001 * (uData[uIdx] - 128) - 0.703125 * (vData[vIdx] - 128));    // g分量
+            bgr[2] = (int)(yData[yIdx] + 1.370705 * (vData[uIdx] - 128));                                    // r分量
+
+            for (k = 0;k < 3;k++){
+                idx = (i * width + j) * 3 + k;
+                if(bgr[k] >= 0 && bgr[k] <= 255)
+                    pBGR24[idx] = bgr[k];
+                else
+                    pBGR24[idx] = (bgr[k] < 0)?0:255;
+            }
+        }
+    }
+	write_png(file_name, (const char *)pBGR24, width, height);
+	free(pBGR24);
+
+    return TRUE;
 }
 
 static bool YV12_to_RGB24(const char *file_name, unsigned char* pYV12, int iWidth, int iHeight) {  
@@ -100,9 +140,9 @@ static bool YV12_to_RGB24(const char *file_name, unsigned char* pYV12, int iWidt
 		for(x=0; x < iWidth; x++) {  
 			i = m + x;  
 			j = n + (x>>1);  
-			rgb[2] = (int)(yData[i] + 1.370705 * (vData[j] - 128)); // r分量值  
-			rgb[1] = (int)(yData[i] - 0.698001 * (uData[j] - 128)  - 0.703125 * (vData[j] - 128)); // g分量值  
-			rgb[0] = (int)(yData[i] + 1.732446 * (uData[j] - 128)); // b分量值  
+			rgb[2] = (int)((yData[i] & 0xFF) + 1.4075 * ((vData[j] & 0xFF) - 128)); // b分量值  
+			rgb[1] = (int)((yData[i] & 0xFF) - 0.3455  * ((uData[j] & 0xFF) - 128)  - 0.7169 * ((vData[j] & 0xFF) - 128)); // g分量值  
+			rgb[0] = (int)((yData[i] & 0xFF) + 1.779 * ((uData[j] & 0xFF)- 128)); // r分量值  
 			j = nYLen - iWidth - m + x;  
 			i = (j<<1) + j;  
 			for(j=0; j<3; j++) {  
@@ -120,6 +160,7 @@ static bool YV12_to_RGB24(const char *file_name, unsigned char* pYV12, int iWidt
 }  
 
 int save_png(const char *file_name, H264Decoder *decoderA, H264Decoder *decoderB) {
+	//FILE *fp = NULL;
 	H264Decoder *decoder;
 	int len = 0;
 	uint8_t *yuv_data = NULL;
@@ -188,7 +229,11 @@ int save_png(const char *file_name, H264Decoder *decoderA, H264Decoder *decoderB
 			out_yuv += width;
 		}
 
-		YV12_to_RGB24(file_name, tmp_yuv, decoderA->rect.w, decoderA->rect.h * 2);
+		//fp = fopen("test.yuv", "wb+");
+		//fwrite(tmp_yuv, 1, len, fp);
+		//fclose(fp);
+		//YV12_to_RGB24(file_name, tmp_yuv, decoderA->rect.w, decoderA->rect.h * 2);
+		//YV12ToBGR24_Native(file_name, tmp_yuv, decoderA->rect.w, decoderA->rect.h * 2);
 	} else {
 		decoder = decoderA != NULL ? decoderA : decoderB;
 		width = decoder->rect.w;
@@ -223,7 +268,8 @@ int save_png(const char *file_name, H264Decoder *decoderA, H264Decoder *decoderB
 			yuv_data += decoder->bufInfo.UsrData.sSystemBuffer.iStride[2];
 			out_yuv += width;
 		}
-		YV12_to_RGB24(file_name, tmp_yuv, decoder->rect.w, decoder->rect.h);
+		//YV12_to_RGB24(file_name, tmp_yuv, decoder->rect.w, decoder->rect.h);
+		YV12ToBGR24_Native(file_name, tmp_yuv, decoder->rect.w, decoder->rect.h);
 	}
 	free(tmp_yuv);
 
@@ -259,7 +305,7 @@ H264Decoder *create_decoder() {
 		return 0;
 	}
 #else
-	
+
 	rv = WelsCreateDecoder(&decoder->dec);
 	if (rv != 0) {
 		return 0;
@@ -271,7 +317,7 @@ H264Decoder *create_decoder() {
 	decParam.eEcActiveIdc = ERROR_CON_SLICE_COPY;
 	decParam.sVideoProperty.eVideoBsType = VIDEO_BITSTREAM_DEFAULT;
 
-	rv = (long)(*decoder->dec)->Initialize(decoder->dec, &decParam);
+	rv = (*decoder->dec)->Initialize(decoder->dec, &decParam);
 	if (rv != 0) {
 		return 0;
 	}

@@ -49,20 +49,20 @@ void set_surface_mode(JoSurface *surface, int mode) {
 	case modeA:
 		surface->video[0].x = 0; surface->video[0].y = 0;
 		surface->video[0].w = w; surface->video[0].h = h;
-		SDLTest_DrawString(surface->render, surface->video[0].w / 2 - 40, surface->video[0].h / 2, "loading...");
-		SDL_RenderDrawRect(surface->render, &surface->video[0]);
+		//SDLTest_DrawString(surface->render, surface->video[0].w / 2 - 40, surface->video[0].h / 2, "loading...");
+		//SDL_RenderDrawRect(surface->render, &surface->video[0]);
 		break;
 	case modeB:
 		/*for first window*/
 		surface->video[0].x = 0; surface->video[0].y = 0;
 		surface->video[0].w = w; surface->video[0].h = h / 2;
-		SDLTest_DrawString(surface->render, surface->video[0].w / 2 - 40, surface->video[0].h / 2, "loading...");
-		SDL_RenderDrawRect(surface->render, &surface->video[0]);
+		//SDLTest_DrawString(surface->render, surface->video[0].w / 2 - 40, surface->video[0].h / 2, "loading...");
+		//SDL_RenderDrawRect(surface->render, &surface->video[0]);
 		/*for second window*/
 		surface->video[1].x = 0; surface->video[1].y = h / 2;
 		surface->video[1].w = w; surface->video[1].h = h / 2;
-		SDLTest_DrawString(surface->render, surface->video[0].w / 2 - 40, surface->video[0].h / 2 * 3, "loading...");
-		SDL_RenderDrawRect(surface->render, &surface->video[1]);
+		//SDLTest_DrawString(surface->render, surface->video[0].w / 2 - 40, surface->video[0].h / 2 * 3, "loading...");
+		//SDL_RenderDrawRect(surface->render, &surface->video[1]);
 		break;
 	case modeC:
 		/*for left up window*/
@@ -83,7 +83,7 @@ void set_surface_mode(JoSurface *surface, int mode) {
 		//SDL_RenderDrawRect(surface->render, &surface->video[3]);
 		break;
 	}
-	SDL_UpdateWindowSurface(surface->screen);
+	//SDL_UpdateWindowSurface(surface->screen);
 	//SDL_FreeSurface(WindowScreen);
 }
 
