@@ -15,7 +15,7 @@
 
 #define MAX_YUV_SIZE (1024 * 1024 * 2)
 
-static int write_png(const char *filename, const char *data, int width, int height) {
+static int write_png(const char *filename, unsigned char *data, int width, int height) {
 	png_FILE_p fp = NULL;
 	png_structp write_ptr = NULL;
 	png_infop info_ptr = NULL;
@@ -95,19 +95,21 @@ static bool YUV420_To_BGR24(const char *file_name, unsigned char *puc_yuv, int w
 
 	unsigned char *rgbData = (unsigned char *)malloc(rgbSize);
 	unsigned char *puc_rgb = (unsigned char *)malloc(rgbSize);
-	memset(rgbData, 0, rgbSize);
-
 	/* 变量声明 */
-	int temp = 0;
+	int temp = 0, x, y;
 
 	unsigned char *rData = rgbData;                  //r分量地址  
 	unsigned char *gData = rgbData + baseSize;       //g分量地址  
 	unsigned char *bData = gData + baseSize;         //b分量地址  
 
 	int uvIndex = 0, yIndex = 0;
-	for (int y = 0; y < height_y; y++)
+	//将R,G,B三个分量赋给img_data  
+	int widthStep = width_y * 3;
+
+	memset(rgbData, 0, rgbSize);
+	for (y = 0; y < height_y; y++)
 	{
-		for (int x = 0; x < width_y; x++)
+		for (x = 0; x < width_y; x++)
 		{
 			uvIndex = (y >> 1) * (width_y >> 1) + (x >> 1);
 			yIndex = y * width_y + x;
@@ -127,11 +129,9 @@ static bool YUV420_To_BGR24(const char *file_name, unsigned char *puc_yuv, int w
 		}
 	}
 
-	//将R,G,B三个分量赋给img_data  
-	int widthStep = width_y * 3;
-	for (int y = 0; y < height_y; y++)
+	for (y = 0; y < height_y; y++)
 	{
-		for (int x = 0; x < width_y; x++)
+		for (x = 0; x < width_y; x++)
 		{
 			puc_rgb[y * widthStep + x * 3 + 2] = rData[y * width_y + x];   //R  
 			puc_rgb[y * widthStep + x * 3 + 1] = gData[y * width_y + x];   //G  
@@ -142,7 +142,7 @@ static bool YUV420_To_BGR24(const char *file_name, unsigned char *puc_yuv, int w
 	write_png(file_name, puc_rgb, width_y, height_y);
 	free(puc_rgb);
 
-	return true;
+	return 1;
 }
 
 int save_png(const char *file_name, H264Decoder *decoderA, H264Decoder *decoderB) {
