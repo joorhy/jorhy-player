@@ -21,7 +21,7 @@ static int write_png(const char *filename, const char *data, int width, int heig
 	png_infop info_ptr = NULL;
 	png_bytep *row_pointers = NULL;
 	png_colorp palette = NULL;
-	int i;
+	int i, y, number_passes, pass;
 
 	fp = fopen(filename, "wb");
 	if (!fp)
@@ -41,11 +41,13 @@ static int write_png(const char *filename, const char *data, int width, int heig
 	if (info_ptr == NULL)
 	{
 		fclose(fp);
+		png_destroy_write_struct(&write_ptr, NULL);
 		return -1;
 	}
 	if (setjmp(png_jmpbuf(write_ptr)))
 	{
 		fclose(fp);
+		png_destroy_write_struct(&write_ptr, &info_ptr);
 		return -1;
 	}
 	png_init_io(write_ptr, fp);
@@ -61,106 +63,89 @@ static int write_png(const char *filename, const char *data, int width, int heig
 	png_set_packing(write_ptr);
 	row_pointers = (png_bytep *)malloc(height * sizeof(png_bytep));
 	for (i = 0; i<height; i++)
-		row_pointers[i] = (png_bytep)data + width*i;
+		row_pointers[i] = (png_bytep)data + width*i*3;
+
 	png_write_image(write_ptr, row_pointers);
+	//number_passes = png_set_interlace_handling(write_ptr);
+
+	//for (pass = 0; pass < number_passes; pass++)
+	//{
+	//	/* 一次性写几行 */
+	//	//png_write_rows(write_ptr, &row_pointers[first_row], number_of_rows);
+
+	//	/* 如果你一次性只写一行像素，可以用下面的代码 */
+	//	for (y = 0; y < height; y++)
+	//		png_write_rows(write_ptr, &row_pointers[y], 1);
+	//}
+
+	png_write_end(write_ptr, info_ptr);
 	png_free(write_ptr, palette);
 	free(row_pointers);
 	fclose(fp);
 }
 
-bool YV12ToBGR24_Native(const char *file_name, unsigned char* pYUV, int width,int height)
+static bool YUV420_To_BGR24(const char *file_name, unsigned char *puc_yuv, int width_y, int height_y)
 {
-	const long len = width * height;
-    unsigned char* yData = pYUV;
-    unsigned char* vData = &yData[len];
-    unsigned char* uData = &vData[len >> 2];
+	//初始化变量  
+	int baseSize = width_y * height_y;
+	int rgbSize = baseSize * 3;
+	unsigned char *puc_y = puc_yuv;
+	unsigned char *puc_u = puc_yuv + baseSize;
+	unsigned char *puc_v = puc_u + baseSize / 4;
 
-    int bgr[3];
-    int yIdx,uIdx,vIdx,idx;
-	int i, j, k;
-	unsigned char* pBGR24 = (unsigned char*)malloc(1024 * 1024);
+	unsigned char *rgbData = (unsigned char *)malloc(rgbSize);
+	unsigned char *puc_rgb = (unsigned char *)malloc(rgbSize);
+	memset(rgbData, 0, rgbSize);
 
-    if (width < 1 || height < 1 || pYUV == NULL || pBGR24 == NULL)
-        return FALSE;
+	/* 变量声明 */
+	int temp = 0;
 
-    for (i = 0;i < height;i++){
-        for (j = 0;j < width;j++){
-            yIdx = i * width + j;
-            vIdx = (i/2) * (width/2) + (j/2);
-            uIdx = vIdx;
+	unsigned char *rData = rgbData;                  //r分量地址  
+	unsigned char *gData = rgbData + baseSize;       //g分量地址  
+	unsigned char *bData = gData + baseSize;         //b分量地址  
 
-            bgr[0] = (int)(yData[yIdx] + 1.732446 * (uData[vIdx] - 128));                                    // b分量
-            bgr[1] = (int)(yData[yIdx] - 0.698001 * (uData[uIdx] - 128) - 0.703125 * (vData[vIdx] - 128));    // g分量
-            bgr[2] = (int)(yData[yIdx] + 1.370705 * (vData[uIdx] - 128));                                    // r分量
+	int uvIndex = 0, yIndex = 0;
+	for (int y = 0; y < height_y; y++)
+	{
+		for (int x = 0; x < width_y; x++)
+		{
+			uvIndex = (y >> 1) * (width_y >> 1) + (x >> 1);
+			yIndex = y * width_y + x;
 
-            for (k = 0;k < 3;k++){
-                idx = (i * width + j) * 3 + k;
-                if(bgr[k] >= 0 && bgr[k] <= 255)
-                    pBGR24[idx] = bgr[k];
-                else
-                    pBGR24[idx] = (bgr[k] < 0)?0:255;
-            }
-        }
-    }
-	write_png(file_name, (const char *)pBGR24, width, height);
-	free(pBGR24);
+			/* b分量 */
+			temp = (int)(puc_y[yIndex] + (puc_v[uvIndex] - 128) * 1.4075);
+			bData[yIndex] = temp<0 ? 0 : (temp > 255 ? 255 : temp);
 
-    return TRUE;
+			/* g分量 */
+			temp = (int)(puc_y[yIndex] + (puc_u[uvIndex] - 128) * (-0.3455) +
+				(puc_v[uvIndex] - 128) * (-0.7169));
+			gData[yIndex] = temp < 0 ? 0 : (temp > 255 ? 255 : temp);
+
+			/* r分量 */
+			temp = (int)(puc_y[yIndex] + (puc_u[uvIndex] - 128) * 1.779);
+			rData[yIndex] = temp < 0 ? 0 : (temp > 255 ? 255 : temp);
+		}
+	}
+
+	//将R,G,B三个分量赋给img_data  
+	int widthStep = width_y * 3;
+	for (int y = 0; y < height_y; y++)
+	{
+		for (int x = 0; x < width_y; x++)
+		{
+			puc_rgb[y * widthStep + x * 3 + 2] = rData[y * width_y + x];   //R  
+			puc_rgb[y * widthStep + x * 3 + 1] = gData[y * width_y + x];   //G  
+			puc_rgb[y * widthStep + x * 3 + 0] = bData[y * width_y + x];   //B  
+		}
+	}
+	free(rgbData);
+	write_png(file_name, puc_rgb, width_y, height_y);
+	free(puc_rgb);
+
+	return true;
 }
 
-static bool YV12_to_RGB24(const char *file_name, unsigned char* pYV12, int iWidth, int iHeight) {  
-	const long nYLen = (long)(iHeight * iWidth);  
-	const int nHfWidth = (iWidth >> 1); 
-	unsigned char* pRGB24 = (unsigned char*)malloc(1024 * 1024);
-
-	int rgb[3];  
-	int i, j, m, n, x, y;  
-	unsigned char* yData, *uData, *vData;
-
-	if(!pYV12 || !pRGB24)  
-		return 0;   
-
-	if(nYLen < 1 || nHfWidth < 1)   
-		return 0;  
-
-	yData = pYV12;  
-	uData = &yData[nYLen];  
-	vData = &uData[nYLen >> 2];  
-	if(!uData || !vData)  
-		return 0;  
-
-	m = -iWidth;  
-	n = -nHfWidth;  
-	for(y = 0; y < iHeight; y++)  {  
-		m += iWidth;  
-
-		if(!(y % 2))  
-			n += nHfWidth;  
-
-		for(x=0; x < iWidth; x++) {  
-			i = m + x;  
-			j = n + (x>>1);  
-			rgb[2] = (int)((yData[i] & 0xFF) + 1.4075 * ((vData[j] & 0xFF) - 128)); // b分量值  
-			rgb[1] = (int)((yData[i] & 0xFF) - 0.3455  * ((uData[j] & 0xFF) - 128)  - 0.7169 * ((vData[j] & 0xFF) - 128)); // g分量值  
-			rgb[0] = (int)((yData[i] & 0xFF) + 1.779 * ((uData[j] & 0xFF)- 128)); // r分量值  
-			j = nYLen - iWidth - m + x;  
-			i = (j<<1) + j;  
-			for(j=0; j<3; j++) {  
-				if(rgb[j]>=0 && rgb[j]<=255)  
-					pRGB24[i + j] = rgb[j];  
-				else  
-					pRGB24[i + j] = (rgb[j] < 0) ? 0 : 255;  
-			}  
-		}  
-	}  
-	write_png(file_name, (const char *)pRGB24, iWidth, iHeight);
-	free(pRGB24);
-
-	return 1;  
-}  
-
 int save_png(const char *file_name, H264Decoder *decoderA, H264Decoder *decoderB) {
-	//FILE *fp = NULL;
 	H264Decoder *decoder;
 	int len = 0;
 	uint8_t *yuv_data = NULL;
@@ -228,12 +213,7 @@ int save_png(const char *file_name, H264Decoder *decoderA, H264Decoder *decoderB
 			yuv_data += decoderB->bufInfo.UsrData.sSystemBuffer.iStride[2];
 			out_yuv += width;
 		}
-
-		//fp = fopen("test.yuv", "wb+");
-		//fwrite(tmp_yuv, 1, len, fp);
-		//fclose(fp);
-		//YV12_to_RGB24(file_name, tmp_yuv, decoderA->rect.w, decoderA->rect.h * 2);
-		//YV12ToBGR24_Native(file_name, tmp_yuv, decoderA->rect.w, decoderA->rect.h * 2);
+		YUV420_To_BGR24(file_name, tmp_yuv, decoderA->rect.w, decoderA->rect.h * 2);
 	} else {
 		decoder = decoderA != NULL ? decoderA : decoderB;
 		width = decoder->rect.w;
@@ -268,8 +248,7 @@ int save_png(const char *file_name, H264Decoder *decoderA, H264Decoder *decoderB
 			yuv_data += decoder->bufInfo.UsrData.sSystemBuffer.iStride[2];
 			out_yuv += width;
 		}
-		//YV12_to_RGB24(file_name, tmp_yuv, decoder->rect.w, decoder->rect.h);
-		YV12ToBGR24_Native(file_name, tmp_yuv, decoder->rect.w, decoder->rect.h);
+		YUV420_To_BGR24(file_name, tmp_yuv, decoder->rect.w, decoder->rect.h);
 	}
 	free(tmp_yuv);
 
