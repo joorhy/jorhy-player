@@ -52,7 +52,17 @@ int send_packet(RtspPacket *pack) {
 }
 
 int recv_packet(RtspPacket *pack, int offset) {
-	recv(pack->sock, pack->recv_buffer + offset, pack->recv_len, 0);
+	int need_recv_len = pack->recv_len;
+	int finish_len = 0;
+	while (need_recv_len > 0) {
+		int recv_len = recv(pack->sock, pack->recv_buffer + offset + finish_len, need_recv_len, 0);
+		if (recv_len > 0) {
+			need_recv_len -= recv_len;
+			finish_len += recv_len;
+		} else {
+			break;
+		}
+	}
 	LOGI("recv len = %d\n", pack->recv_len);
 
 	return 0;

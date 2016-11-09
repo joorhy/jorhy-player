@@ -3,6 +3,7 @@
 
 #include "XL_rtsp_session.h"
 #include "XL_surface.h"
+#include "XL_record.h"
 #include "SDL.h"
 #include "SDL_thread.h"
 #include "SDL_mutex.h"

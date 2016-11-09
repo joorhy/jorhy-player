@@ -113,6 +113,7 @@ void screen_capture(const char *file_name, JoSurface *surface, H264Decoder *deco
 void render_frame(JoSurface *surface, H264Decoder *decoder, int index) {
 	static int videoA = 0;
 	static int videoB = 0;
+	int i = 0;
 
 #ifdef USE_FFMPEG
 	SDL_UpdateYUVTexture(surface->texture, &decoder->rect, (const Uint8 *)decoder->picture->data[0], decoder->picture->linesize[0],
@@ -131,6 +132,21 @@ void render_frame(JoSurface *surface, H264Decoder *decoder, int index) {
 	if (surface->screen_mode == screenModeNone) {
 		if (videoA == 1) {
 			SDL_RenderCopy(surface->render, surface->texture[0], &decoder->rect, &surface->video[0]);
+			static FILE *fp = NULL;
+			if (fp == NULL) {
+				fp = fopen("test.yuv", "wb+");
+			}
+			if (decoder->data[0] != NULL) {
+				for (i = 0; i < 288; i++) {
+					fwrite(decoder->data[0] + i * decoder->bufInfo.UsrData.sSystemBuffer.iStride[0], 1, 352, fp);
+				}
+				for (i = 0; i < 144; i++) {
+					fwrite(decoder->data[1] + i * decoder->bufInfo.UsrData.sSystemBuffer.iStride[1], 1, 176, fp);
+				}
+				for (i = 0; i < 144; i++) {
+					fwrite(decoder->data[2] + i * decoder->bufInfo.UsrData.sSystemBuffer.iStride[1], 1, 176, fp);
+				}
+			}
 		}
 		if (videoB == 1) {
 			SDL_RenderCopy(surface->render, surface->texture[1], &decoder->rect, &surface->video[1]);
