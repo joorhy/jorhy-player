@@ -5,6 +5,7 @@
 #include "XL_rtp_stream.h"
 #include "XL_decoder.h"
 #include "XL_surface.h"
+#include "XL_record.h"
 
 /* Set up for C function definitions, even when using C++ */
 #ifdef __cplusplus
@@ -28,6 +29,7 @@ struct _RtspSession {
 	RtspPacket *packet;
 	RtpStream *stream;
 	H264Decoder *decoder;
+	Record *record;
 	int session_state;
 	int is_set;
 	int index;

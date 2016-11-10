@@ -20,6 +20,7 @@ extern void start_play();
 extern void stop_play();
 extern void changeScreen(float x, float y);
 extern void snapshot(const char *file_name);
+extern void record(const char *file_name);
 
 /* Ends C function definitions when using C++ */
 #ifdef __cplusplus

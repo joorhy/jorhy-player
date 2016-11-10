@@ -155,6 +155,7 @@ RtspSession *create_session(const char *addr, short port, const char *vec_id, in
 	session->packet = create_packet(addr, port);
 	session->stream = create_rtp_stream();
 	session->decoder = create_decoder();
+	session->record = create_record();
 
 	session->index = index;
 
@@ -197,6 +198,7 @@ void session_process(JoSurface *surface, RtspSession *session) {
 		if (session->stream->stream_state == stream_complate) {
 			if (session->stream->frame_type == frame_i || session->stream->frame_type == frame_p) {
 				decode_frame(session->decoder, session->stream);
+				cache_frame(session->record, session->decoder);
 				render_frame(surface, session->decoder, session->index);
 
 				session->stream->stream_state = stream_begin;

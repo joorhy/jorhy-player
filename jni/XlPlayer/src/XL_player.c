@@ -82,6 +82,9 @@ int main(int argc, char *argv[]) {
 					} else if (e.key.keysym.sym == SDLK_F2) {
 						snapshot("test.png");
 					}
+					else if (e.key.keysym.sym == SDLK_F3) {
+						record("path");
+					}
 				}
 			}
 #endif
@@ -139,7 +142,8 @@ void snapshot(const char *file_name) {
 }
 
 void record(const char *file_name) {
-
+	save_file(sessionA->record, "session_1.yuv");
+	save_file(sessionB->record, "session_2.yuv");
 }
 
 #ifdef __ANDROID__
