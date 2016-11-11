@@ -12,6 +12,7 @@ Record *create_record() {
 
 static void initialize(Record *record, int prev_time, int frame_rate, int width, int height) {
 	int frame_num = prev_time * frame_rate;
+	record->prev_time;
 	record->frame_rate = frame_rate;
 	record->width = width;
 	record->height = height;

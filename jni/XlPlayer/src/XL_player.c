@@ -13,6 +13,8 @@
 static Scheduler *schd = NULL;
 static RtspSession *sessionA = NULL;
 static RtspSession *sessionB = NULL;
+static FileSession *sessionX = NULL;
+static FileSession *sessionY = NULL;
 static char serverAddr[32];
 static int serverPort;
 static char vehA[256];
@@ -126,6 +128,41 @@ void stop_play() {
 				session_stop(sessionB); 
 				destroy_session(sessionB);
 				sessionB = NULL;
+			}
+		}
+	}
+}
+
+void play_file() {
+		if (isRunning) {
+		set_surface_mode(schd->surface, videoMode);
+		sessionX = create_file_session(0);
+		add_session_2(schd, sessionX);
+		session_start(sessionX, "session_1.yuv");
+
+		if (videoMode == modeB) {
+			sessionY = create_file_session(1);
+			add_session_2(schd, sessionY);
+			session_start(sessionY, "session_2.yuv");
+		}
+	}
+}
+
+void stop_file() {
+	if (isRunning) {
+		if (sessionX != NULL) {
+			file_stop(sessionX);
+			del_session_2(schd, sessionX);
+			destroy_file_session(sessionX);
+			sessionX = NULL;
+		}
+		
+		if (videoMode == modeB) {
+			if (sessionY != NULL) {
+				del_session_2(schd, sessionY); 
+				file_stop(sessionY); 
+				destroy_file_session(sessionY);
+				sessionY = NULL;
 			}
 		}
 	}

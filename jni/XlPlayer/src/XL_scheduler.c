@@ -63,7 +63,7 @@ void destroy_scheduler(Scheduler *schd) {
 	SDL_Quit();
 }
 
-void scheduler_process(Scheduler *schd) {
+static process_rtsp_session(Scheduler *schd) {
 	RtspSession *session = NULL;
 	if (schd == NULL) {
 		return;
@@ -81,6 +81,42 @@ void scheduler_process(Scheduler *schd) {
 				session = session->next;
 			}
 		}
+	} else {
+#ifdef WIN32
+		Sleep(1);
+#else
+		usleep(1000);
+#endif
+	}
+}
+
+void process_file_session(Scheduler *schd) {
+	FileSession *session = NULL;
+	if (schd == NULL) {
+		return;
+	}
+
+	session = schd->list_2;
+	if (schd->list_2) {
+		session = schd->list_2;
+		while (session) {
+			file_process(schd->surface, session);
+			session = session->next;
+		}
+	} else {
+#ifdef WIN32
+		Sleep(1);
+#else
+		usleep(1000);
+#endif
+	}
+}
+
+void scheduler_process(Scheduler *schd) {
+	if (schd->list) {
+		process_rtsp_session(schd);
+	} else if (schd->list) {
+		process_file_session(schd);
 	} else {
 #ifdef WIN32
 		Sleep(1);
@@ -127,6 +163,47 @@ void del_session(Scheduler *schd, RtspSession *session) {
 			cond = 0;
 		}
 	}
+	schd->list = 0;
+	SDL_UnlockMutex(schd->lock);
+}
 
+void add_session_2(Scheduler *schd, FileSession *session) {
+	FileSession *oldfirst;
+
+	SDL_LockMutex(schd->lock);
+	/* enqueue the session to the list of scheduled sessions */
+	oldfirst = schd->list_2;
+	schd->list_2 = session;
+	session->next = oldfirst;
+
+	SDL_UnlockMutex(schd->lock);
+}
+
+void del_session_2(Scheduler *schd, FileSession *session) {
+	FileSession *tmp;
+	int cond = 1;
+	SDL_LockMutex(schd->lock);
+	tmp = schd->list_2;
+
+	if (tmp != NULL && tmp == session) {
+		schd->list_2 = tmp->next;
+		SDL_UnlockMutex(schd->lock);
+		return;
+	}
+
+	/* go the position of session in the list */
+	while (cond) {
+		if (tmp != NULL) {
+			if (tmp->next == session) {
+				tmp->next = tmp->next->next;
+				cond = 0;
+			} else tmp = tmp->next;
+		} else {
+			/* the session was not found ! */
+			LOGI("rtp_scheduler_remove_session: the session was not found in the scheduler list!");
+			cond = 0;
+		}
+	}
+	schd->list_2 = 0;
 	SDL_UnlockMutex(schd->lock);
 }

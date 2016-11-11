@@ -10,6 +10,7 @@
 
 typedef struct Scheduler {
 	RtspSession *list;
+	FileSession *list_2;
 	SDL_mutex *lock;
 	JoSurface *surface;
 	fd_set readfds;
@@ -27,6 +28,9 @@ extern void destroy_scheduler(Scheduler *schd);
 
 extern void add_session(Scheduler *schd, RtspSession *session);
 extern void del_session(Scheduler *schd, RtspSession *session);
+
+extern void add_session_2(Scheduler *schd, FileSession *session);
+extern void del_session_2(Scheduler *schd, FileSession *session);
 
 #ifdef __cplusplus
 }
