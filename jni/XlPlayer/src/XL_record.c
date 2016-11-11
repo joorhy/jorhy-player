@@ -12,10 +12,10 @@ Record *create_record() {
 
 static void initialize(Record *record, int prev_time, int frame_rate, int width, int height) {
 	int frame_num = prev_time * frame_rate;
-	record->prev_time;
-	record->frame_rate = frame_rate;
-	record->width = width;
-	record->height = height;
+	record->header.prev_time = prev_time;
+	record->header.frame_rate = frame_rate;
+	record->header.width = width;
+	record->header.height = height;
 
 	YUVFrame *frame = 0;
 	for (int i = 0; i < frame_num; i++) {
@@ -82,17 +82,17 @@ void cache_frame(Record *record, H264Decoder *decoder) {
 			record->is_initialize = 1;
 		}
 		frame = get_free(record);
-		for (i = 0; i < record->height; i++) {
-			memcpy(frame->yuv + offset, decoder->data[0] + i * decoder->bufInfo.UsrData.sSystemBuffer.iStride[0], record->width);
-			offset += record->width;
+		for (i = 0; i < record->header.height; i++) {
+			memcpy(frame->yuv + offset, decoder->data[0] + i * decoder->bufInfo.UsrData.sSystemBuffer.iStride[0], record->header.width);
+			offset += record->header.width;
 		}
-		for (i = 0; i < record->height / 2; i++) {
-			memcpy(frame->yuv + offset, decoder->data[1] + i * decoder->bufInfo.UsrData.sSystemBuffer.iStride[1], record->width / 2);
-			offset += record->width / 2;
+		for (i = 0; i < record->header.height / 2; i++) {
+			memcpy(frame->yuv + offset, decoder->data[1] + i * decoder->bufInfo.UsrData.sSystemBuffer.iStride[1], record->header.width / 2);
+			offset += record->header.width / 2;
 		}
-		for (i = 0; i < record->height / 2; i++) {
-			memcpy(frame->yuv + offset, decoder->data[2] + i * decoder->bufInfo.UsrData.sSystemBuffer.iStride[1], record->width / 2);
-			offset += record->width / 2;
+		for (i = 0; i < record->header.height / 2; i++) {
+			memcpy(frame->yuv + offset, decoder->data[2] + i * decoder->bufInfo.UsrData.sSystemBuffer.iStride[1], record->header.width / 2);
+			offset += record->header.width / 2;
 		}
 		if (record->is_full) {
 			record->tail->next = frame;
@@ -104,9 +104,9 @@ void cache_frame(Record *record, H264Decoder *decoder) {
 
 void save_file(Record *record, const char *file_name) {
 	FILE *fp = fopen(file_name, "wb+");
-	//fwrite(record, sizeof(char), sizeof(int) * 3, fp);
+	fwrite(record, sizeof(char), sizeof(FileHeader), fp);
 	YUVFrame *cur = record->head;
-	int yuv_len = record->width * record->height * 3 / 2;
+	int yuv_len = record->header.width * record->header.height * 3 / 2;
 	while (cur) {
 		fwrite(cur->yuv, sizeof(char), yuv_len, fp);
 		cur = cur->next;

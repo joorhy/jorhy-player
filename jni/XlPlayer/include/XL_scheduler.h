@@ -2,6 +2,7 @@
 #define _XL_scheduler_h
 
 #include "XL_rtsp_session.h"
+#include "XL_file_session.h"
 #include "XL_surface.h"
 #include "XL_record.h"
 #include "SDL.h"

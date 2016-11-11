@@ -67,10 +67,13 @@ int main(int argc, char *argv[]) {
 #else
 			if (isPaused) {
 				if(e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_SPACE) {
-
 					isPaused = 0;
 					start_play();
 					LOGI("Resume \n");
+				} else if (e.key.keysym.sym == SDLK_TAB) {
+					isPaused = 0;
+					play_file("path");
+					LOGI("Play File \n");
 				}
 			} else {
 				if(e.type == SDL_KEYDOWN) {
@@ -83,10 +86,9 @@ int main(int argc, char *argv[]) {
 						changeScreen((float)0.5, (float)0.6);
 					} else if (e.key.keysym.sym == SDLK_F2) {
 						snapshot("test.png");
-					}
-					else if (e.key.keysym.sym == SDLK_F3) {
+					} else if (e.key.keysym.sym == SDLK_F3) {
 						record("path");
-					}
+					} 
 				}
 			}
 #endif
@@ -133,17 +135,26 @@ void stop_play() {
 	}
 }
 
-void play_file() {
-		if (isRunning) {
-		set_surface_mode(schd->surface, videoMode);
-		sessionX = create_file_session(0);
-		add_session_2(schd, sessionX);
-		session_start(sessionX, "session_1.yuv");
+void on_file_end(int index) {
+	LOGI("on_file_end %d\n", index);
+	isPaused = 1;
+}
+
+void play_file(const char *file_path) {
+	if (isRunning) {
+		if (!sessionX) {
+			set_surface_mode(schd->surface, videoMode);
+			sessionX = create_file_session(0, on_file_end);
+			add_session_2(schd, sessionX);
+		}
+		file_start(sessionX, "session_1.yuv");
 
 		if (videoMode == modeB) {
-			sessionY = create_file_session(1);
-			add_session_2(schd, sessionY);
-			session_start(sessionY, "session_2.yuv");
+			if (!sessionY) {
+				sessionY = create_file_session(1, on_file_end);
+				add_session_2(schd, sessionY);
+			}
+			file_start(sessionY, "session_2.yuv");
 		}
 	}
 }
@@ -240,6 +251,14 @@ void Java_org_libsdl_app_SDLActivity_nativeStopPlay(JNIEnv* env, jclass cls) {
 		isPaused = 1;
 		stop_play();
 	}
+}
+
+void Java_org_libsdl_app_SDLActivity_nativePlayFile(JNIEnv* env, jclass cls) {
+	LOGI("Java_org_libsdl_app_SDLActivity_nativePlayFile \n");
+}
+
+void Java_org_libsdl_app_SDLActivity_nativeStopFile(JNIEnv* env, jclass cls) {
+	LOGI("Java_org_libsdl_app_SDLActivity_nativeStopFile \n");
 }
 
 void Java_org_libsdl_app_SDLActivity_nativeExitPlay(JNIEnv* env, jclass cls) {

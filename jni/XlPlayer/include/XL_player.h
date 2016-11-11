@@ -13,11 +13,16 @@ extern "C" {
 extern void Java_org_libsdl_app_SDLActivity_nativeInit(JNIEnv* env, jclass cls, jstring parm);
 extern void Java_org_libsdl_app_SDLActivity_nativeStartPlay(JNIEnv* env, jclass cls);
 extern void Java_org_libsdl_app_SDLActivity_nativeStopPlay(JNIEnv* env, jclass cls);
+extern void Java_org_libsdl_app_SDLActivity_nativePlayFile(JNIEnv* env, jclass cls);
+extern void Java_org_libsdl_app_SDLActivity_nativeStopFile(JNIEnv* env, jclass cls);
 extern void Java_org_libsdl_app_SDLActivity_nativeDoubleClick(JNIEnv* env, jclass cls, jfloat x, jfloat y);
+extern void Java_org_libsdl_app_SDLActivity_nativeSnapshot(JNIEnv* env, jclass cls, jstring parm)
 #endif
 
 extern void start_play();
 extern void stop_play();
+extern void play_file(const char *file_name);
+extern void stop_file();
 extern void changeScreen(float x, float y);
 extern void snapshot(const char *file_name);
 extern void record(const char *file_name);

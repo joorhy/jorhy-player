@@ -9,6 +9,9 @@ extern "C" {
 typedef struct _YUVFrame YUVFrame;
 typedef struct _YUVFrame {
 	char *yuv;
+	char *y;
+	char *u;
+	char *v;
 	int idle;
 	YUVFrame *next;
 };

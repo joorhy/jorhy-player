@@ -128,7 +128,7 @@ void render_frame(JoSurface *surface, H264Decoder *decoder, int index) {
 		(const Uint8 *)decoder->data[1], decoder->bufInfo.UsrData.sSystemBuffer.iStride[1], (const Uint8 *)decoder->data[2], decoder->bufInfo.UsrData.sSystemBuffer.iStride[1]);
 #endif
 	SDL_RenderClear(surface->render);
-	LOGI("x = %d, y = %d, w = %d, h = %d", surface->video[index].x, surface->video[index].y, surface->video[index].w, surface->video[index].h);
+	LOGI("x = %d, y = %d, w = %d, h = %d \n", surface->video[index].x, surface->video[index].y, surface->video[index].w, surface->video[index].h);
 	if (surface->screen_mode == screenModeNone) {
 		if (videoA == 1) {
 			SDL_RenderCopy(surface->render, surface->texture[0], &decoder->rect, &surface->video[0]);

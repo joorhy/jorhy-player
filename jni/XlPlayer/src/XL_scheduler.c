@@ -115,7 +115,7 @@ void process_file_session(Scheduler *schd) {
 void scheduler_process(Scheduler *schd) {
 	if (schd->list) {
 		process_rtsp_session(schd);
-	} else if (schd->list) {
+	} else if (schd->list_2) {
 		process_file_session(schd);
 	} else {
 #ifdef WIN32

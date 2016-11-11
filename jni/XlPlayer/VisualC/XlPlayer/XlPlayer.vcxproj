@@ -98,6 +98,7 @@
     <ClCompile Include="..\..\src\libpng\pngwrite.c" />
     <ClCompile Include="..\..\src\libpng\pngwtran.c" />
     <ClCompile Include="..\..\src\libpng\pngwutil.c" />
+    <ClCompile Include="..\..\src\XL_file_session.c" />
     <ClCompile Include="..\..\src\XL_font.c" />
     <ClCompile Include="..\..\src\XL_player.c" />
     <ClCompile Include="..\..\src\XL_base64.c" />
@@ -127,14 +128,15 @@
   <ItemGroup>
     <ClInclude Include="..\..\include\XL_base64.h" />
     <ClInclude Include="..\..\include\XL_decoder.h" />
+    <ClInclude Include="..\..\include\XL_file_session.h" />
     <ClInclude Include="..\..\include\XL_log.h" />
     <ClInclude Include="..\..\include\XL_packet.h" />
     <ClInclude Include="..\..\include\XL_player.h" />
+    <ClInclude Include="..\..\include\XL_record.h" />
     <ClInclude Include="..\..\include\XL_rtp_stream.h" />
     <ClInclude Include="..\..\include\XL_rtsp_session.h" />
     <ClInclude Include="..\..\include\XL_scheduler.h" />
     <ClInclude Include="..\..\include\XL_surface.h" />
-    <ClInclude Include="..\..\src\XL_record.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
